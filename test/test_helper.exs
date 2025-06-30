@@ -4,14 +4,15 @@ defmodule SwiftlerTestHelper do
   @moduledoc """
   Helper functions for Swiftler tests.
   """
-  
+
   def ensure_swift_compiled do
     # Check if Swift compiler is available
     case System.find_executable("swift") do
-      nil -> 
+      nil ->
         IO.puts("Warning: Swift compiler not found. Some tests will be skipped.")
         false
-      _ -> 
+
+      _ ->
         # Attempt to compile Swift sources
         case Mix.Tasks.Swift.Compile.run([]) do
           :ok -> true
@@ -19,7 +20,7 @@ defmodule SwiftlerTestHelper do
         end
     end
   end
-  
+
   def skip_if_swift_not_available(context) do
     if ensure_swift_compiled() do
       context
