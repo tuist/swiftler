@@ -1,0 +1,4 @@
+module CErlang {
+    umbrella header "CErlang.h"
+    export *
+}

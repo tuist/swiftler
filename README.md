@@ -1,10 +1,10 @@
 # Swiftler
 
-A utility for calling Swift code from Elixir, similar to how Rustler works for Rust. Swiftler provides seamless integration between Elixir and Swift through static linking and automatic NIF binding generation.
+A utility for calling Swift code from Elixir, similar to how Rustler works for Rust. Swiftler provides seamless integration between Elixir and Swift through dynamic binary generation and automatic NIF binding generation.
 
 ## Features
 
-- 🚀 **Static Library Integration**: Everything is statically compiled for optimal performance and deployment simplicity
+- 🚀 **Dynamic Binary Integration**: Swift code is compiled into dynamic binaries and integrated through Elixir's NIF system
 - 🔧 **Swift Package Manager**: Uses SPM as the build system, following Swift ecosystem conventions
 - 📦 **Mix Tasks**: Provides `mix swift.compile` and `mix swift.clean` tasks similar to Rustler
 - 🎯 **Automatic Bindings**: Swift macros for automatic NIF binding generation
@@ -25,76 +25,45 @@ end
 
 ## Usage
 
-### 1. Create a Swift Package
+### 1. Add Swiftler as a Package Dependency
 
-Create a `native/` directory in your project root and initialize a Swift package:
-
-```bash
-mkdir native
-cd native
-swift package init --type library --name YourProjectNative
-```
-
-### 2. Configure Swift Package
-
-Update your `native/Package.swift` to create a static library:
+Create a Swift package or add Swiftler to your existing package dependencies:
 
 ```swift
-// swift-tools-version: 5.9
-import PackageDescription
-
+// Package.swift
 let package = Package(
-    name: "YourProjectNative",
-    products: [
-        .library(
-            name: "YourProjectNative",
-            type: .static,
-            targets: ["YourProjectNative"]
-        )
+    name: "YourProject",
+    dependencies: [
+        .package(url: "https://github.com/tuist/swiftler.git", from: "0.1.0")
     ],
     targets: [
         .target(
-            name: "YourProjectNative"
+            name: "YourProject",
+            dependencies: ["Swiftler"]
         )
     ]
 )
 ```
 
-### 3. Write Swift Functions
+### 2. Define Swift Functions with Swiftler Macros
 
-Create Swift functions in `native/Sources/YourProjectNative/`:
+Use Swiftler's macros to define functions that can be called from Elixir:
 
 ```swift
-import Darwin
+import Swiftler
 
-public func add(_ a: Int32, _ b: Int32) -> Int32 {
-    return a + b
+#nifLibrary(name: "adder", functions: [add(_:_:)])
+
+@nif func add(_ a: Int, _ b: Int) -> Int {
+    a + b
 }
 
-public func fibonacci_sequence(_ count: Int32) -> [Int32] {
-    guard count > 0 else { return [] }
-    var sequence: [Int32] = [0, 1]
-    for i in 2..<Int(count) {
-        sequence.append(sequence[i-1] + sequence[i-2])
-    }
-    return Array(sequence.prefix(Int(count)))
+@nif func greet(_ name: String) -> String {
+    "Hello, \(name) from Swift!"
 }
 ```
 
-### 4. Create Elixir Module
-
-Define your Elixir module using Swiftler macros:
-
-```elixir
-defmodule YourProject.Math do
-  use Swiftler
-
-  @swift_function add(a: :i32, b: :i32) :: :i32
-  @swift_function fibonacci_sequence(count: :i32) :: [:i32]
-end
-```
-
-### 5. Compile Swift Code
+### 3. Compile Swift Code
 
 Run the Mix task to compile your Swift code:
 
@@ -102,15 +71,32 @@ Run the Mix task to compile your Swift code:
 mix swift.compile
 ```
 
-### 6. Use in Your Application
+### 4. Create Elixir NIF Module
+
+Define your Elixir module to load the NIF:
 
 ```elixir
-# This will return a placeholder until static linking is fully implemented
-YourProject.Math.add(5, 3)
-# => {:error, :static_linking_required, "add_swift", [:a, :b]}
+defmodule YourProject.Math do
+  @on_load :load_nifs
 
-YourProject.Math.fibonacci_sequence(10)
-# => [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+  def load_nifs do
+    :erlang.load_nif('./priv/libswiftler', 0)
+  end
+
+  def add(_a, _b), do: :erlang.nif_error(:nif_not_loaded)
+  def greet(_name), do: :erlang.nif_error(:nif_not_loaded)
+end
+```
+
+
+### 5. Use in Your Application
+
+```elixir
+YourProject.Math.add(5, 3)
+# => 8
+
+YourProject.Math.greet("World")
+# => "Hello, World from Swift!"
 ```
 
 ## Mix Tasks
@@ -120,16 +106,16 @@ YourProject.Math.fibonacci_sequence(10)
 
 ## Architecture
 
-Swiftler follows a static library approach:
+Swiftler follows a macro-driven approach:
 
-1. Swift code is compiled into a static library using Swift Package Manager
-2. The static library is copied to the `priv/` directory
-3. Elixir macros generate NIF stubs that will eventually link to the static library
-4. At runtime, functions call into the statically linked Swift code
+1. Swift macros (`@nif` and `#nifLibrary`) generate C-compatible NIF code at compile time
+2. Swift code is compiled into a dynamic library using Swift Package Manager
+3. The dynamic library contains C-compatible functions that can be loaded as NIFs
+4. Elixir loads the dynamic library and calls Swift functions through the NIF interface
 
 ## Development Status
 
-Swiftler is currently in development. The macro system and static library generation are working, but the final NIF linking step is still being implemented. Functions currently return placeholder values indicating static linking is required.
+Swiftler is currently in development. The macro system generates C-compatible NIF code from Swift functions, and dynamic library generation is working. The project now supports the swift-nif API pattern with `@nif` function decorators and `#nifLibrary` declarations.
 
 ## Testing
 
@@ -141,9 +127,10 @@ mix test
 
 The tests verify that:
 - Swift compilation works correctly
-- Static libraries are generated
+- Dynamic binaries are generated
 - Elixir macros create proper function stubs
 - Type validation works as expected
+- NIF integration functions properly
 
 ## Contributing
 
@@ -162,4 +149,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - Inspired by [Rustler](https://github.com/rusterlium/rustler) for Rust-Elixir integration
+- API design influenced by [swift-nif](https://github.com/yaglo/swift-nif) prototype
 - Built on top of Swift Package Manager and Elixir's NIF system
