@@ -12,7 +12,6 @@ defmodule Mix.Tasks.Compile.Swift do
   use Mix.Task.Compiler
 
   @recursive true
-  @manifest "compile.swift"
 
   def run(_args) do
     config = Mix.Project.config()
@@ -77,7 +76,7 @@ defmodule Mix.Tasks.Compile.Swift do
   defp compile_with_spm(swift_opts) do
     # Build the Swift package
     build_args = ["build", "-c", "release"] ++ swift_opts
-    
+
     # Determine build directory - use current directory if Package.swift exists, otherwise use native/
     build_dir = if File.exists?("Package.swift"), do: ".", else: "native"
 
@@ -91,10 +90,11 @@ defmodule Mix.Tasks.Compile.Swift do
     # Find the built dynamic library
     build_dir = if File.exists?("Package.swift"), do: ".", else: "native"
     build_path = "#{build_dir}/.build/release"
-    
+
     # Look for dynamic library (.dylib on macOS, .so on Linux)
-    dynamic_lib = find_file_with_extension(build_path, ".dylib") || 
-                  find_file_with_extension(build_path, ".so")
+    dynamic_lib =
+      find_file_with_extension(build_path, ".dylib") ||
+        find_file_with_extension(build_path, ".so")
 
     case dynamic_lib do
       nil ->
@@ -103,15 +103,17 @@ defmodule Mix.Tasks.Compile.Swift do
       dynamic_lib_path ->
         # Copy dynamic library to priv for NIF loading
         File.mkdir_p!("priv")
-        
+
         # Determine target filename based on source
         source_filename = Path.basename(dynamic_lib_path)
-        target_filename = case Path.extname(source_filename) do
-          ".dylib" -> "libswiftler.dylib"
-          ".so" -> "libswiftler.so"
-          _ -> "libswiftler.so"
-        end
-        
+
+        target_filename =
+          case Path.extname(source_filename) do
+            ".dylib" -> "libswiftler.dylib"
+            ".so" -> "libswiftler.so"
+            _ -> "libswiftler.so"
+          end
+
         target_path = Path.join("priv", target_filename)
 
         case File.cp(dynamic_lib_path, target_path) do

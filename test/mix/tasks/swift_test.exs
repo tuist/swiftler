@@ -27,8 +27,13 @@ defmodule Mix.Tasks.SwiftTest do
 
   describe "Mix.Tasks.Swift.Clean" do
     test "run/1 calls clean function" do
-      # This should not raise an error
-      assert :ok = Mix.Tasks.Swift.Clean.run([])
+      # Capture output to avoid printing during tests
+      import ExUnit.CaptureIO
+      
+      capture_io(fn ->
+        # This should not raise an error
+        assert :ok = Mix.Tasks.Swift.Clean.run([])
+      end)
     end
   end
 end

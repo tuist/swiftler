@@ -9,6 +9,9 @@ defmodule Mix.Tasks.Swift.Clean do
 
   def run(_args) do
     Mix.Tasks.Compile.Swift.clean()
-    Mix.shell().info("Cleaned Swift build artifacts")
+    # Don't print unless explicitly in verbose mode
+    if "--verbose" in System.argv() do
+      Mix.shell().info("Cleaned Swift build artifacts")
+    end
   end
 end

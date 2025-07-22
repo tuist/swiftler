@@ -25,45 +25,60 @@ end
 
 ## Usage
 
-### 1. Add Swiftler as a Package Dependency
+### 1. Add Swiftler to Your Elixir Project
 
-Create a Swift package or add Swiftler to your existing package dependencies:
+Add Swiftler to your dependencies in `mix.exs`:
 
-```swift
-// Package.swift
-let package = Package(
-    name: "YourProject",
-    dependencies: [
-        .package(url: "https://github.com/tuist/swiftler.git", from: "0.1.0")
-    ],
-    targets: [
-        .target(
-            name: "YourProject",
-            dependencies: ["Swiftler"]
-        )
-    ]
-)
+```elixir
+def deps do
+  [
+    {:swiftler, "~> 0.1.0"}
+  ]
+end
 ```
 
-### 2. Define Swift Functions with Swiftler Macros
+### 2. Generate Swift NIF Project
 
-Use Swiftler's macros to define functions that can be called from Elixir:
+Use the Swiftler mix task to set up your Swift NIF:
+
+```bash
+mix swiftler.new
+```
+
+This will create:
+- `native/Package.swift` - Swift package configuration
+- `native/Sources/YourProject/YourProject.swift` - Swift source with example functions
+- `lib/your_project.ex` - Elixir module to load the NIF
+
+You can customize the setup with options:
+
+```bash
+# Custom NIF name and module
+mix swiftler.new --name calculator --module MyApp.Calculator
+
+# Custom path
+mix swiftler.new --path swift_nif
+```
+
+### 3. Customize Your Swift Functions
+
+Edit the generated Swift file to add your custom logic:
 
 ```swift
 import Swiftler
 
-#nifLibrary(name: "adder", functions: [add(_:_:)])
+#nifLibrary(name: "calculator", functions: [add(_:_:), multiply(_:_:)])
 
 @nif func add(_ a: Int, _ b: Int) -> Int {
     a + b
 }
 
-@nif func greet(_ name: String) -> String {
-    "Hello, \(name) from Swift!"
+@nif func multiply(_ a: Int, _ b: Int) -> Int {
+    a * b
 }
 ```
 
-### 3. Compile Swift Code
+### 4. Compile Swift Code
 
 Run the Mix task to compile your Swift code:
 
@@ -71,12 +86,13 @@ Run the Mix task to compile your Swift code:
 mix swift.compile
 ```
 
-### 4. Create Elixir NIF Module
+### 5. Use Your Swift Functions
 
-Define your Elixir module to load the NIF:
+The generated Elixir module is ready to use:
 
 ```elixir
-defmodule YourProject.Math do
+# The module was created by mix swiftler.new
+defmodule YourProject do
   @on_load :load_nifs
 
   def load_nifs do
@@ -84,19 +100,19 @@ defmodule YourProject.Math do
   end
 
   def add(_a, _b), do: :erlang.nif_error(:nif_not_loaded)
-  def greet(_name), do: :erlang.nif_error(:nif_not_loaded)
+  def multiply(_a, _b), do: :erlang.nif_error(:nif_not_loaded)
 end
 ```
 
 
-### 5. Use in Your Application
+### 6. Test Your Integration
 
 ```elixir
-YourProject.Math.add(5, 3)
+YourProject.add(5, 3)
 # => 8
 
-YourProject.Math.greet("World")
-# => "Hello, World from Swift!"
+YourProject.multiply(4, 7)
+# => 28
 ```
 
 ## Mix Tasks

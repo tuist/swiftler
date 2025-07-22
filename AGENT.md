@@ -4,6 +4,17 @@ This file provides guidance to AI coding agents when working with code in this r
 
 **Important**: This file should be updated whenever significant changes are made to the project structure, build process, architecture, or development workflows to ensure AI agents have accurate and current information.
 
+## Updating This File
+
+**After every change**, consider if any decisions were made that impact the development context:
+- New patterns or conventions adopted
+- Testing approaches (e.g., using ExUnit.Case's tmp_dir instead of custom helpers)
+- Architecture decisions
+- Tool preferences
+- API design choices
+
+Update this file immediately when such decisions are made to maintain accurate context for future development.
+
 ## Project Overview
 
 Swiftler is a library for calling Swift code from Elixir using NIFs (Native Implemented Functions), similar to how [Rustler](https://github.com/rusterlium/rustler) works for Rust. The API design is influenced by the [swift-nif](https://github.com/yaglo/swift-nif) prototype. The project enables seamless integration between Elixir and Swift through dynamic library compilation and automatic NIF binding generation.
@@ -12,7 +23,8 @@ Swiftler is a library for calling Swift code from Elixir using NIFs (Native Impl
 
 ### Building and Testing
 - `mix deps.get` - Install Elixir dependencies
-- `mix swift.compile` - Compile Swift code into static library (copies to priv/libswiftler.a)
+- `mix swiftler.new` - Generate new Swift NIF project structure
+- `mix swift.compile` - Compile Swift code into dynamic library (copies to priv/)
 - `mix test` - Run the full test suite
 - `mix format` - Format Elixir code
 - `mix format --check-formatted` - Check if code is properly formatted
@@ -69,7 +81,7 @@ The project uses a dynamic library compilation model:
 
 ### Requirements
 - Elixir 1.18.0+ with OTP 27.0+
-- Swift 5.9+
+- Swift 6.0+ (Swift is always required and should be assumed to be present in all environments)
 - macOS (primary development platform)
 
 ### Project Structure
@@ -115,6 +127,17 @@ The project uses a dynamic library compilation model:
 - Use ExUnit framework
 - Test macro generation and compilation workflows
 - Verify error handling for invalid Swift function signatures
+- Use ExUnit.Case's `@tag :tmp_dir` for tests requiring temporary directories instead of custom helpers
+- Prefer built-in ExUnit utilities over custom test helpers when available
+- Do not check for Swift availability in tests - assume Swift is always present
+- Mix tasks should not print output during tests unless in verbose mode
+- Use ExUnit.CaptureIO to suppress output when testing Mix tasks
+- Tag slow tests (like Swift builds) with `@tag :slow` to allow excluding them during rapid development
+- Separate structure validation from build verification in tests for faster feedback
+- Use `swift package dump-package` for package validation instead of actual builds
+- Do not test actual Swift builds in automated tests due to long compilation times (5-10+ minutes)
+- Manual testing of builds should be done outside the test suite when needed
+- When creating examples or demos, use local `--swiftler-path` to avoid slow SwiftSyntax compilation
 
 ### Swift Tests
 - Run Swift tests with `swift test` in `native/` directory
@@ -141,15 +164,23 @@ The project uses a dynamic library compilation model:
 
 ## Development Workflows
 
-### Adding New Swift Functions
-1. Import Swiftler in your Swift module
+### Setting Up a New Swift NIF Project
+1. Add Swiftler to your Elixir project dependencies
+2. Run `mix swiftler.new` to generate project structure
+3. Customize the generated Swift functions as needed
+4. Run `mix swift.compile` to build dynamic library
+5. Test your integration with `mix test`
+
+### Adding New Swift Functions to Existing Project
+1. Edit your Swift source file in `native/Sources/`
 2. Define Swift function with `@nif` macro for NIF export
 3. Include function in `#nifLibrary` declaration
-4. Create corresponding Elixir NIF module with function stubs
+4. Add corresponding Elixir function stub to your module
 5. Run `mix swift.compile` to build dynamic library
 6. Test with `mix test` to verify integration
 
 ### Mix Task Architecture
+- `Mix.Tasks.Swiftler.New` generates new Swift NIF project structure
 - `Mix.Tasks.Compile.Swift` handles Swift compilation workflow
 - `Mix.Tasks.Swift.Compile` and `Mix.Tasks.Swift.Clean` provide user-facing commands
 - Compilation copies dynamic library to `priv/` for NIF loading
