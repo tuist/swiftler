@@ -13,5 +13,6 @@ defmodule Mix.Tasks.Swift.Clean do
     if "--verbose" in System.argv() do
       Mix.shell().info("Cleaned Swift build artifacts")
     end
+    :ok
   end
 end
