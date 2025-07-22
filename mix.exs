@@ -1,16 +1,19 @@
 defmodule Swiftler.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+
   def project do
     [
       app: :swiftler,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.18.0",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       description: description(),
       package: package(),
-      aliases: aliases()
+      aliases: aliases(),
+      docs: docs()
     ]
   end
 
@@ -35,7 +38,7 @@ defmodule Swiftler.MixProject do
 
   defp package do
     [
-      files: ~w(lib priv mix.exs README* LICENSE*),
+      files: ~w(lib priv mix.exs README* LICENSE* CHANGELOG* docs),
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/tuist/swiftler"}
     ]
@@ -45,6 +48,34 @@ defmodule Swiftler.MixProject do
     [
       "compile.swift": ["swift.compile"],
       "clean.swift": ["swift.clean"]
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: [
+        "README.md",
+        "docs/getting-started.md",
+        "docs/swift-integration.md",
+        "docs/api-reference.md",
+        "docs/troubleshooting.md",
+        "CHANGELOG.md": [title: "Changelog"],
+        LICENSE: [title: "License"]
+      ],
+      groups_for_extras: [
+        "Getting Started": ["README.md", "docs/getting-started.md"],
+        "Guides": ["docs/swift-integration.md", "docs/api-reference.md"],
+        "Resources": ["docs/troubleshooting.md", "CHANGELOG.md", "LICENSE"]
+      ],
+      groups_for_modules: [
+        "Public API": [Swiftler, Swiftler.Macros],
+        "Mix Tasks": ~r/^Mix.Tasks/,
+        "Internal": [Swiftler.Compiler]
+      ],
+      source_ref: "v#{@version}",
+      source_url: "https://github.com/tuist/swiftler",
+      homepage_url: "https://github.com/tuist/swiftler"
     ]
   end
 end
