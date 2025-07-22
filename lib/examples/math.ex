@@ -1,17 +1,18 @@
 defmodule Examples.Math do
   @moduledoc """
   Example module demonstrating Swift function calls from Elixir.
+  This is a documentation example - it doesn't actually load Swift code.
   """
 
-  use Swiftler
-
-  # Define Swift functions that will be available in this module
-  swift_function(add(a: :int, b: :int) :: :int)
-  swift_function(multiply(a: :int, b: :int) :: :int)
-  swift_function(greet(name: :string) :: :string)
-  swift_function(calculate_circle_area(radius: :double) :: :double)
-  swift_function(fibonacci(n: :int) :: :int)
-  swift_function(is_prime(number: :int) :: :bool)
+  # This would normally be: use Swiftler, otp_app: :your_app
+  # But for this example, we'll define the functions manually
+  
+  def add(_a, _b), do: :erlang.nif_error(:nif_not_loaded)
+  def multiply(_a, _b), do: :erlang.nif_error(:nif_not_loaded)
+  def greet(_name), do: :erlang.nif_error(:nif_not_loaded)
+  def calculate_circle_area(_radius), do: :erlang.nif_error(:nif_not_loaded)
+  def fibonacci(_n), do: :erlang.nif_error(:nif_not_loaded)
+  def is_prime(_number), do: :erlang.nif_error(:nif_not_loaded)
 
   @doc """
   Calculate the sum of two numbers using Swift.
