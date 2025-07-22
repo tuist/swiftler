@@ -25,6 +25,7 @@ Swiftler is a library for calling Swift code from Elixir using NIFs (Native Impl
 - `mix deps.get` - Install Elixir dependencies
 - `mix swiftler.new` - Generate new Swift NIF project structure
 - `mix swift.compile` - Compile Swift code into dynamic library (copies to priv/)
+- `mix compile` - Compile everything including Swift code (if `:swift` is in compilers list)
 - `mix test` - Run the full test suite
 - `mix format` - Format Elixir code
 - `mix format --check-formatted` - Check if code is properly formatted
@@ -73,9 +74,11 @@ The project uses a dynamic library compilation model:
 - Supports Int, String, and other basic types with automatic conversion
 
 **Elixir Side:**
-- Standard NIF loading using `:erlang.load_nif`
+- Automatic compilation at compile-time when using `use Swiftler, otp_app: :app_name`
+- Standard NIF loading using `:erlang.load_nif` via `@on_load` hook
 - Function stubs return `:erlang.nif_error(:nif_not_loaded)` until library is loaded
 - Direct function calls to Swift code through NIF interface
+- Manifest tracking for automatic recompilation when Swift files change
 
 ## Development Environment
 
@@ -181,10 +184,17 @@ The project uses a dynamic library compilation model:
 
 ### Mix Task Architecture
 - `Mix.Tasks.Swiftler.New` generates new Swift NIF project structure
-- `Mix.Tasks.Compile.Swift` handles Swift compilation workflow
+- `Mix.Tasks.Compile.Swift` handles Swift compilation workflow with automatic recompilation support
 - `Mix.Tasks.Swift.Compile` and `Mix.Tasks.Swift.Clean` provide user-facing commands
 - Compilation copies dynamic library to `priv/` for NIF loading
+- Manifest tracking enables incremental compilation based on file changes
 
 ## Current Development Status
 
 The project is in active development with working macro system and dynamic library generation. The Swift macros generate C-compatible NIF code, and the compilation process creates loadable dynamic libraries for Elixir NIF integration.
+
+### Recent Improvements
+- Automatic recompilation support similar to Rustler
+- Manifest tracking to detect source file changes
+- Compile-time Swift compilation when using `use Swiftler`
+- Integration with Mix compiler pipeline via `:swift` compiler

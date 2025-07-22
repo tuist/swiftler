@@ -33,16 +33,11 @@ defmodule Swiftler.Macros do
         {name, [], nil}
       end)
 
-    # Generate call to the statically linked Swift function
-    swift_function_name = "#{name}_swift"
-
     quote do
       @swift_functions {unquote(name), unquote(typed_args), unquote(return_type)}
 
       def unquote(name)(unquote_splicing(param_names)) do
-        # For now, return a placeholder indicating static linking is needed
-        # In a real implementation, this would call the statically linked Swift function
-        {:error, :static_linking_required, unquote(swift_function_name), unquote(typed_args)}
+        :erlang.nif_error(:nif_not_loaded)
       end
     end
   end
@@ -53,9 +48,6 @@ defmodule Swiftler.Macros do
 
     quote do
       def __swift_functions__, do: unquote(Macro.escape(swift_functions))
-
-      # Functions will be statically linked - no dynamic loading needed
-      # The actual implementations will be provided by the compiled Swift static library
     end
   end
 

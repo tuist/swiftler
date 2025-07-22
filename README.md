@@ -10,6 +10,7 @@ A utility for calling Swift code from Elixir, similar to how Rustler works for R
 - 🎯 **Automatic Bindings**: Swift macros for automatic NIF binding generation
 - 🧪 **Testing Support**: Includes Swift Testing framework integration
 - 💼 **Minimal Dependencies**: Lightweight approach with minimal C-related dependencies
+- ♻️ **Automatic Recompilation**: Tracks source file changes and only recompiles when necessary
 
 ## Installation
 
@@ -19,6 +20,18 @@ Add `swiftler` to your list of dependencies in `mix.exs`:
 def deps do
   [
     {:swiftler, "~> 0.1.0"}
+  ]
+end
+```
+
+To enable automatic recompilation when Swift source files change, add `:swift` to your project's compilers list:
+
+```elixir
+def project do
+  [
+    app: :my_app,
+    compilers: [:swift] ++ Mix.compilers(),
+    # ...
   ]
 end
 ```
@@ -93,11 +106,11 @@ The generated Elixir module is ready to use:
 ```elixir
 # The module was created by mix swiftler.new
 defmodule YourProject do
-  @on_load :load_nifs
-
-  def load_nifs do
-    :erlang.load_nif('./priv/libswiftler', 0)
-  end
+  use Swiftler, otp_app: :your_app
+  
+  # Define Swift function signatures
+  swift_function add(a: :int, b: :int) :: :int
+  swift_function multiply(a: :int, b: :int) :: :int
 
   def add(_a, _b), do: :erlang.nif_error(:nif_not_loaded)
   def multiply(_a, _b), do: :erlang.nif_error(:nif_not_loaded)
