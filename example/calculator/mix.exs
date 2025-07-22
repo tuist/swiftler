@@ -7,7 +7,7 @@ defmodule Calculator.MixProject do
       version: "0.1.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
-      compilers: [:swift] ++ Mix.compilers(),
+      # compilers: [:swift] ++ Mix.compilers(),  # Not needed with Swiftler
       deps: deps()
     ]
   end

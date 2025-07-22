@@ -25,25 +25,40 @@ defmodule Swiftler do
   """
 
   defmacro __using__(opts) do
-    otp_app = Keyword.fetch!(opts, :otp_app)
-    crate = Keyword.get(opts, :crate, "swiftler")
-    load_data = Keyword.get(opts, :load_data, 0)
+    quote bind_quoted: [opts: opts] do
+      otp_app = Keyword.fetch!(opts, :otp_app)
+      package = Keyword.get(opts, :crate, "swiftler")
+      
+      # Compile the Swift code at compile time and get configuration
+      config = Swiftler.Compiler.compile_package(otp_app, package, opts)
 
-    quote do
+      # Register all Swift files as external resources for recompilation tracking
+      for resource <- config.external_resources do
+        @external_resource resource
+      end
+
+      # Only set up NIF loading if we have a library
+      if config.lib do
+        @load_from config.load_from
+        @load_data config.load_data
+        @package config.package_name
+
+        @before_compile Swiftler
+      end
+
+      # Always import macros regardless of compilation status
       import Swiftler.Macros
       @before_compile Swiftler.Macros
 
       Module.register_attribute(__MODULE__, :swift_functions, accumulate: true)
 
-      @swiftler_opts unquote(opts)
-      @otp_app unquote(otp_app)
-      @crate unquote(crate)
-      @load_data unquote(load_data)
+      @swiftler_opts opts
+      @otp_app otp_app
+    end
+  end
 
-      # Trigger Swift compilation at compile time
-      require Swiftler.Compiler
-      @load_from Swiftler.Compiler.compile_crate(unquote(otp_app), unquote(crate), unquote(opts))
-
+  defmacro __before_compile__(_env) do
+    quote do
       @on_load :__swiftler_init__
 
       def __swiftler_init__ do
@@ -58,7 +73,7 @@ defmodule Swiftler do
             :ok
 
           {:error, reason} ->
-            raise "Failed to load Swift NIF from #{load_path}: #{inspect(reason)}"
+            raise "Failed to load Swift NIF from #{@load_from}: #{inspect(reason)}"
         end
       end
     end

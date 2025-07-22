@@ -10,7 +10,8 @@ A utility for calling Swift code from Elixir, similar to how Rustler works for R
 - 🎯 **Automatic Bindings**: Swift macros for automatic NIF binding generation
 - 🧪 **Testing Support**: Includes Swift Testing framework integration
 - 💼 **Minimal Dependencies**: Lightweight approach with minimal C-related dependencies
-- ♻️ **Automatic Recompilation**: Tracks source file changes and only recompiles when necessary
+- ♻️ **Automatic Recompilation**: Tracks Swift source file changes automatically using `@external_resource`
+- 🔄 **Rustler-style Integration**: Works like Rustler - no need to modify Mix compilers list
 
 ## Installation
 
@@ -24,17 +25,7 @@ def deps do
 end
 ```
 
-To enable automatic recompilation when Swift source files change, add `:swift` to your project's compilers list:
-
-```elixir
-def project do
-  [
-    app: :my_app,
-    compilers: [:swift] ++ Mix.compilers(),
-    # ...
-  ]
-end
-```
+Swiftler automatically handles Swift compilation and recompilation - no need to modify your Mix compilers list.
 
 ## Usage
 
@@ -130,17 +121,21 @@ YourProject.multiply(4, 7)
 
 ## Mix Tasks
 
-- `mix swift.compile` - Compiles the Swift package and generates static libraries
-- `mix swift.clean` - Cleans Swift build artifacts
+- `mix swift.compile` - Compiles the Swift package and generates dynamic libraries
+- `mix swift.clean` - Cleans Swift build artifacts  
+- `mix swiftler.new` - Generates a new Swift NIF project structure
 
 ## Architecture
 
-Swiftler follows a macro-driven approach:
+Swiftler follows a macro-driven approach inspired by Rustler:
 
-1. Swift macros (`@nif` and `#nifLibrary`) generate C-compatible NIF code at compile time
-2. Swift code is compiled into a dynamic library using Swift Package Manager
-3. The dynamic library contains C-compatible functions that can be loaded as NIFs
-4. Elixir loads the dynamic library and calls Swift functions through the NIF interface
+1. **Compile-time Integration**: Swift compilation happens during Elixir module compilation via the `__using__` macro
+2. **Automatic Source Tracking**: Swift source files are registered as `@external_resource` for automatic recompilation
+3. **Swift Macro System**: Swift macros (`@nif` and `#nifLibrary`) generate C-compatible NIF code at compile time
+4. **Dynamic Library Generation**: Swift code is compiled into a dynamic library using Swift Package Manager
+5. **NIF Loading**: Elixir loads the dynamic library and calls Swift functions through the NIF interface
+
+This approach eliminates the need to modify your Mix project's compilers list, making it as seamless as Rustler's Rust integration.
 
 ## Development Status
 
