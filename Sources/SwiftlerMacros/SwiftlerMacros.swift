@@ -43,7 +43,15 @@ public struct NIFMacro: PeerMacro {
             // Generate appropriate extraction based on type
             let extraction: String
             switch paramType {
-            case "Int", "Int32":
+            case "Int":
+                extraction = """
+                    var \(paramName)_i32: Int32 = 0
+                    guard enif_get_int(env, argv[\(index)], &\(paramName)_i32) != 0 else {
+                        return enif_make_badarg(env)
+                    }
+                    let \(paramName) = Int(\(paramName)_i32)
+                    """
+            case "Int32":
                 extraction = """
                     var \(paramName): Int32 = 0
                     guard enif_get_int(env, argv[\(index)], &\(paramName)) != 0 else {
@@ -58,6 +66,13 @@ public struct NIFMacro: PeerMacro {
                     }
                     let \(paramName)Data = Data(bytes: \(paramName)Binary.data, count: \(paramName)Binary.size)
                     guard let \(paramName) = String(data: \(paramName)Data, encoding: .utf8) else {
+                        return enif_make_badarg(env)
+                    }
+                    """
+            case "Double":
+                extraction = """
+                    var \(paramName): Double = 0
+                    guard enif_get_double(env, argv[\(index)], &\(paramName)) != 0 else {
                         return enif_make_badarg(env)
                     }
                     """
@@ -82,7 +97,12 @@ public struct NIFMacro: PeerMacro {
         if let returnType = funcDecl.signature.returnClause?.type {
             let returnTypeStr = returnType.description.trimmingCharacters(in: .whitespaces)
             switch returnTypeStr {
-            case "Int", "Int32":
+            case "Int":
+                resultConversion = """
+                    let result = \(functionCall)
+                    return enif_make_int(env, Int32(result))
+                    """
+            case "Int32":
                 resultConversion = """
                     let result = \(functionCall)
                     return enif_make_int(env, result)
@@ -92,13 +112,24 @@ public struct NIFMacro: PeerMacro {
                     let result = \(functionCall)
                     let resultData = result.data(using: .utf8) ?? Data()
                     var resultBinary = ErlNifBinary()
-                    enif_alloc_binary(resultData.count, &resultBinary)
+                    _ = enif_alloc_binary(resultData.count, &resultBinary)
                     resultData.withUnsafeBytes { bytes in
                         if let baseAddress = bytes.baseAddress {
                             memcpy(resultBinary.data, baseAddress, bytes.count)
                         }
                     }
                     return enif_make_binary(env, &resultBinary)
+                    """
+            case "Double":
+                resultConversion = """
+                    let result = \(functionCall)
+                    return enif_make_double(env, result)
+                    """
+            case "Bool":
+                resultConversion = """
+                    let result = \(functionCall)
+                    let atomName = result ? "true" : "false"
+                    return enif_make_atom(env, atomName)
                     """
             default:
                 resultConversion = """
@@ -193,20 +224,25 @@ public struct NIFLibraryMacro: DeclarationMacro {
                     \(functionEntries)
                 ]
                 
+                let funcsPtr = UnsafeMutablePointer<ErlNifFunc>.allocate(capacity: funcs.count)
+                funcs.withUnsafeBufferPointer { buffer in
+                    funcsPtr.initialize(from: buffer.baseAddress!, count: funcs.count)
+                }
+                
                 let entry = UnsafeMutablePointer<ErlNifEntry>.allocate(capacity: 1)
                 entry.pointee = ErlNifEntry(
                     major: ERL_NIF_MAJOR_VERSION,
                     minor: ERL_NIF_MINOR_VERSION,
                     name: strdup("\(libraryName)"),
                     num_of_funcs: Int32(funcs.count),
-                    funcs: UnsafeMutablePointer(mutating: funcs),
+                    funcs: funcsPtr,
                     load: nil,
                     reload: nil,
                     upgrade: nil,
                     unload: nil,
                     vm_variant: strdup("beam.vanilla"),
                     options: 1,
-                    sizeof_ErlNifResourceTypeInit: MemoryLayout<ErlNifResourceTypeInit>.size,
+                    sizeof_ErlNifResourceTypeInit: 0,
                     min_erts: strdup("erts-12.0")
                 )
                 

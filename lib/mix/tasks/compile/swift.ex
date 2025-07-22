@@ -21,7 +21,7 @@ defmodule Mix.Tasks.Compile.Swift do
     config = Mix.Project.config()
     swift_opts = config[:swift_opts] || []
     manifest_path = manifest_path()
-    
+
     # Check if we need to compile
     if needs_compilation?(manifest_path) do
       try do
@@ -32,9 +32,11 @@ defmodule Mix.Tasks.Compile.Swift do
              :ok <- generate_dynamic_bindings() do
           # Write manifest after successful compilation
           write_manifest(manifest_path, sources)
+
           unless "--silent" in args do
             Mix.shell().info("Compiled Swift NIF")
           end
+
           {:ok, []}
         else
           {:error, reason} when is_binary(reason) ->
@@ -207,22 +209,22 @@ defmodule Mix.Tasks.Compile.Swift do
   defp get_swift_sources do
     # Find all Swift source files and Package.swift
     source_dir = if File.exists?("Package.swift"), do: ".", else: "native"
-    
+
     package_swift = Path.join(source_dir, "Package.swift")
     sources_dir = Path.join(source_dir, "Sources")
-    
-    swift_files = 
+
+    swift_files =
       if File.exists?(sources_dir) do
         Path.wildcard(Path.join([sources_dir, "**", "*.swift"]))
       else
         []
       end
-    
+
     # Include Package.swift and Package.resolved if they exist
-    package_files = 
+    package_files =
       [package_swift, Path.join(source_dir, "Package.resolved")]
       |> Enum.filter(&File.exists?/1)
-    
+
     # Get modification times for all files
     (package_files ++ swift_files)
     |> Enum.map(fn path ->
@@ -235,7 +237,7 @@ defmodule Mix.Tasks.Compile.Swift do
     # Convert to maps for easier comparison
     old_map = Map.new(old_sources)
     new_map = Map.new(new_sources)
-    
+
     # Check if any files were added or removed
     if Map.keys(old_map) != Map.keys(new_map) do
       true
@@ -253,6 +255,7 @@ defmodule Mix.Tasks.Compile.Swift do
       {:ok, contents} ->
         try do
           manifest = :erlang.binary_to_term(contents)
+
           if manifest.vsn == @manifest_vsn do
             {:ok, manifest}
           else
@@ -261,8 +264,9 @@ defmodule Mix.Tasks.Compile.Swift do
         rescue
           _ -> {:error, :invalid_manifest}
         end
-      
-      error -> error
+
+      error ->
+        error
     end
   end
 
@@ -272,7 +276,7 @@ defmodule Mix.Tasks.Compile.Swift do
       sources: sources,
       timestamp: System.system_time()
     }
-    
+
     File.mkdir_p!(Path.dirname(path))
     File.write!(path, :erlang.term_to_binary(manifest))
   end

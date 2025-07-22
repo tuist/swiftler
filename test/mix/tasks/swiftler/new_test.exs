@@ -28,7 +28,7 @@ defmodule Mix.Tasks.Swiftler.NewTest do
   test "creates Swift package structure and compiles with swift build", %{tmp_dir: tmp_dir} do
     # Get the Swiftler path before changing directory
     swiftler_path = File.cwd!()
-    
+
     File.cd!(tmp_dir, fn ->
       create_test_project(tmp_dir)
 
@@ -96,7 +96,7 @@ defmodule Mix.Tasks.Swiftler.NewTest do
   test "creates Swift package with local Swiftler dependency and compiles", %{tmp_dir: tmp_dir} do
     # Get the actual Swiftler path (current project root) before changing directory
     swiftler_path = File.cwd!()
-    
+
     File.cd!(tmp_dir, fn ->
       create_test_project(tmp_dir)
 
@@ -133,7 +133,7 @@ defmodule Mix.Tasks.Swiftler.NewTest do
   test "creates Swift package with custom paths and names and compiles", %{tmp_dir: tmp_dir} do
     # Get the actual Swiftler path before changing directory
     swiftler_path = File.cwd!()
-    
+
     File.cd!(tmp_dir, fn ->
       create_test_project(tmp_dir)
 
@@ -172,7 +172,7 @@ defmodule Mix.Tasks.Swiftler.NewTest do
   test "handles relative swiftler-path correctly", %{tmp_dir: tmp_dir} do
     # Get the actual Swiftler path (current project root) before changing directory
     swiftler_absolute_path = File.cwd!()
-    
+
     File.cd!(tmp_dir, fn ->
       create_test_project(tmp_dir)
 
@@ -201,5 +201,4 @@ defmodule Mix.Tasks.Swiftler.NewTest do
       end)
     end)
   end
-
 end

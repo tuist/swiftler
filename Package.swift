@@ -24,6 +24,7 @@ let package = Package(
             dependencies: [
                 "SwiftlerMacros",
                 "SwiftlerSupport",
+                "CErlang"
             ]
         ),
         .target(
@@ -41,6 +42,7 @@ let package = Package(
         .target(
             name: "CErlang",
             path: "Sources/CErlang",
+            sources: ["weak_symbols.c"],
             publicHeadersPath: "."
         ),
     ]

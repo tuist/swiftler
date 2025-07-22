@@ -1,4 +1,5 @@
 @_exported import SwiftlerSupport
+@_exported import CErlang
 
 /// The main Swiftler module that provides macros for creating NIF libraries.
 ///

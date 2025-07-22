@@ -105,9 +105,20 @@ The project uses a dynamic library compilation model:
 ```
 
 ### CI/CD
-- GitHub Actions runs on macOS-latest
-- Tests formatting, Swift compilation, and Elixir tests
+- GitHub Actions runs on macOS-latest with separate jobs for formatting, compilation, and tests
+- All compilation runs with warnings as errors (Elixir: `--warnings-as-errors`, Swift: `-Xswiftc -warnings-as-errors`)
+- Tests formatting, Swift compilation, and Elixir tests in parallel jobs
 - Requires both Elixir and Swift environments
+
+### Pre-Push Checklist
+Before pushing code or creating pull requests, ensure:
+1. **Format all code**: Run `mix format` to format Elixir code
+2. **Check formatting**: Run `mix format --check-formatted` to verify formatting
+3. **Compile without warnings**: 
+   - Elixir: `mix compile --warnings-as-errors`
+   - Swift: `swift build -Xswiftc -warnings-as-errors`
+4. **Run all tests**: `mix test` and `swift test`
+5. **Test examples**: If changes affect the API, test the example projects
 
 ## Code Style and Conventions
 

@@ -28,32 +28,36 @@ defmodule Swiftler do
     otp_app = Keyword.fetch!(opts, :otp_app)
     crate = Keyword.get(opts, :crate, "swiftler")
     load_data = Keyword.get(opts, :load_data, 0)
-    
+
     quote do
       import Swiftler.Macros
       @before_compile Swiftler.Macros
 
       Module.register_attribute(__MODULE__, :swift_functions, accumulate: true)
-      
+
       @swiftler_opts unquote(opts)
       @otp_app unquote(otp_app)
       @crate unquote(crate)
       @load_data unquote(load_data)
-      
+
       # Trigger Swift compilation at compile time
       require Swiftler.Compiler
       @load_from Swiftler.Compiler.compile_crate(unquote(otp_app), unquote(crate), unquote(opts))
-      
+
       @on_load :__swiftler_init__
-      
+
       def __swiftler_init__ do
         # Load the compiled NIF
         load_path = @load_from |> to_charlist()
-        
+
         case :erlang.load_nif(load_path, @load_data) do
-          :ok -> :ok
-          {:error, {:reload, _}} -> :ok
-          {:error, reason} -> 
+          :ok ->
+            :ok
+
+          {:error, {:reload, _}} ->
+            :ok
+
+          {:error, reason} ->
             raise "Failed to load Swift NIF from #{load_path}: #{inspect(reason)}"
         end
       end

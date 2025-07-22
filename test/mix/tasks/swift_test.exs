@@ -9,15 +9,16 @@ defmodule Mix.Tasks.SwiftTest do
       # This test verifies that the compile task handles missing Swift packages gracefully
       File.cd!(tmp_dir, fn ->
         # Capture output to prevent error messages from appearing in test output
-        output = capture_io(:stderr, fn ->
-          capture_io(fn ->
-            # Run without any Swift package present
-            result = Mix.Tasks.Swift.Compile.run([])
-            # Should fail because there's no native directory or Package.swift
-            send(self(), {:result, result})
+        output =
+          capture_io(:stderr, fn ->
+            capture_io(fn ->
+              # Run without any Swift package present
+              result = Mix.Tasks.Swift.Compile.run([])
+              # Should fail because there's no native directory or Package.swift
+              send(self(), {:result, result})
+            end)
           end)
-        end)
-        
+
         assert_received {:result, {:error, []}}
         # Verify it printed an error message
         assert output =~ "Swift compilation failed"
