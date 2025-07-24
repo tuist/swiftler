@@ -20,9 +20,9 @@ SwiftSyntax compilation can take 5-10 minutes on first build. Run manually:
 mix swift.compile
 ```
 
-Or increase the timeout in your project by setting the environment variable:
+The timeout is configurable via environment variable:
 ```bash
-export SWIFTLER_BUILD_TIMEOUT=600000  # 10 minutes
+export SWIFTLER_BUILD_TIMEOUT=600000  # 10 minutes (in milliseconds)
 ```
 
 ### Swift Compiler Not Found

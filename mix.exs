@@ -65,13 +65,13 @@ defmodule Swiftler.MixProject do
       ],
       groups_for_extras: [
         "Getting Started": ["README.md", "docs/getting-started.md"],
-        "Guides": ["docs/swift-integration.md", "docs/api-reference.md"],
-        "Resources": ["docs/troubleshooting.md", "CHANGELOG.md", "LICENSE"]
+        Guides: ["docs/swift-integration.md", "docs/api-reference.md"],
+        Resources: ["docs/troubleshooting.md", "CHANGELOG.md", "LICENSE"]
       ],
       groups_for_modules: [
         "Public API": [Swiftler, Swiftler.Macros],
         "Mix Tasks": ~r/^Mix.Tasks/,
-        "Internal": [Swiftler.Compiler]
+        Internal: [Swiftler.Compiler]
       ],
       source_ref: "v#{@version}",
       source_url: "https://github.com/tuist/swiftler",

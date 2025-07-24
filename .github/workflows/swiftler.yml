@@ -136,7 +136,11 @@ jobs:
       - name: Compile example
         run: mix compile
         working-directory: example/calculator
+        env:
+          SWIFTLER_BUILD_TIMEOUT: "600000"  # 10 minutes for first-time SwiftSyntax compilation
       
       - name: Run example tests
         run: mix test
         working-directory: example/calculator
+        env:
+          SWIFTLER_BUILD_TIMEOUT: "600000"  # 10 minutes for first-time SwiftSyntax compilation

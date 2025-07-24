@@ -28,7 +28,7 @@ defmodule Swiftler do
     quote bind_quoted: [opts: opts] do
       otp_app = Keyword.fetch!(opts, :otp_app)
       package = Keyword.get(opts, :crate, "swiftler")
-      
+
       # Compile the Swift code at compile time and get configuration
       config = Swiftler.Compiler.compile_package(otp_app, package, opts)
 

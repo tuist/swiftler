@@ -37,7 +37,7 @@ defmodule Swiftler.Compiler do
 
     # Get Swift source files for external resource tracking
     external_resources = get_swift_sources_paths()
-    
+
     # Return configuration struct
     %Config{
       load_from: find_library_path(app_path, package_name),
@@ -105,20 +105,26 @@ defmodule Swiftler.Compiler do
     build_dir = if File.exists?("Package.swift"), do: ".", else: "native"
 
     # Use Task.async with timeout to prevent hanging on SwiftSyntax compilation during development
-    timeout = 30_000  # 30 seconds
+    # Default 30 seconds, but configurable via environment variable
+    timeout = System.get_env("SWIFTLER_BUILD_TIMEOUT", "30000") |> String.to_integer()
 
-    task = Task.async(fn ->
-      System.cmd("swift", build_args, cd: build_dir, stderr_to_stdout: true)
-    end)
+    task =
+      Task.async(fn ->
+        System.cmd("swift", build_args, cd: build_dir, stderr_to_stdout: true)
+      end)
 
     case Task.yield(task, timeout) do
-      {:ok, {_output, 0}} -> 
+      {:ok, {_output, 0}} ->
         :ok
-      {:ok, {output, _}} -> 
+
+      {:ok, {output, _}} ->
         {:error, "Swift build failed: #{output}"}
+
       nil ->
         Task.shutdown(task, :brutal_kill)
-        {:error, "Swift build timed out (30s). This usually happens when compiling SwiftSyntax for the first time. Please run 'mix swift.compile' manually."}
+
+        {:error,
+         "Swift build timed out (#{div(timeout, 1000)}s). This usually happens when compiling SwiftSyntax for the first time. Please run 'mix swift.compile' manually."}
     end
   end
 
@@ -198,22 +204,22 @@ defmodule Swiftler.Compiler do
   defp get_swift_sources_paths do
     # Find all Swift source files and Package.swift
     source_dir = if File.exists?("Package.swift"), do: ".", else: "native"
-    
+
     package_swift = Path.join(source_dir, "Package.swift")
     sources_dir = Path.join(source_dir, "Sources")
-    
-    swift_files = 
+
+    swift_files =
       if File.exists?(sources_dir) do
         Path.wildcard(Path.join([sources_dir, "**", "*.swift"]))
       else
         []
       end
-    
+
     # Include Package.swift and Package.resolved if they exist
-    package_files = 
+    package_files =
       [package_swift, Path.join(source_dir, "Package.resolved")]
       |> Enum.filter(&File.exists?/1)
-    
+
     # Return all Swift-related files
     package_files ++ swift_files
   end
