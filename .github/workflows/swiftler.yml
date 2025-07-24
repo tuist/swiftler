@@ -9,7 +9,7 @@ on:
 jobs:
   formatting:
     name: Check Formatting
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       
@@ -34,20 +34,32 @@ jobs:
 
   compile:
     name: Compile
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      
+      - name: List available Xcode versions
+        run: ls -la /Applications/ | grep Xcode || true
+      
+      - name: Select Xcode 16
+        run: |
+          # Try different possible Xcode 16 paths
+          if [ -d "/Applications/Xcode_16.0.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.0.app
+          elif [ -d "/Applications/Xcode_16_beta.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16_beta.app
+          elif [ -d "/Applications/Xcode-16.0.0.app" ]; then
+            sudo xcode-select -s /Applications/Xcode-16.0.0.app
+          else
+            echo "Warning: Xcode 16 not found, using default"
+          fi
+          swift --version
       
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
           elixir-version: '1.18.0'
           otp-version: '27.0'
-      
-      - name: Set up Swift
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '6.0'
       
       - name: Restore dependencies cache
         uses: actions/cache@v4
@@ -68,20 +80,32 @@ jobs:
 
   test:
     name: Run Tests
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      
+      - name: List available Xcode versions
+        run: ls -la /Applications/ | grep Xcode || true
+      
+      - name: Select Xcode 16
+        run: |
+          # Try different possible Xcode 16 paths
+          if [ -d "/Applications/Xcode_16.0.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.0.app
+          elif [ -d "/Applications/Xcode_16_beta.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16_beta.app
+          elif [ -d "/Applications/Xcode-16.0.0.app" ]; then
+            sudo xcode-select -s /Applications/Xcode-16.0.0.app
+          else
+            echo "Warning: Xcode 16 not found, using default"
+          fi
+          swift --version
       
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
           elixir-version: '1.18.0'
           otp-version: '27.0'
-      
-      - name: Set up Swift
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '6.0'
       
       - name: Restore dependencies cache
         uses: actions/cache@v4
@@ -102,20 +126,32 @@ jobs:
 
   example:
     name: Test Example
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      
+      - name: List available Xcode versions
+        run: ls -la /Applications/ | grep Xcode || true
+      
+      - name: Select Xcode 16
+        run: |
+          # Try different possible Xcode 16 paths
+          if [ -d "/Applications/Xcode_16.0.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.0.app
+          elif [ -d "/Applications/Xcode_16_beta.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16_beta.app
+          elif [ -d "/Applications/Xcode-16.0.0.app" ]; then
+            sudo xcode-select -s /Applications/Xcode-16.0.0.app
+          else
+            echo "Warning: Xcode 16 not found, using default"
+          fi
+          swift --version
       
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
           elixir-version: '1.18.0'
           otp-version: '27.0'
-      
-      - name: Set up Swift
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '6.0'
       
       - name: Restore dependencies cache
         uses: actions/cache@v4
@@ -136,11 +172,7 @@ jobs:
       - name: Compile example
         run: mix compile
         working-directory: example/calculator
-        env:
-          SWIFTLER_BUILD_TIMEOUT: "600000"  # 10 minutes for first-time SwiftSyntax compilation
       
       - name: Run example tests
         run: mix test
         working-directory: example/calculator
-        env:
-          SWIFTLER_BUILD_TIMEOUT: "600000"  # 10 minutes for first-time SwiftSyntax compilation
