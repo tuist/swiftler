@@ -23,15 +23,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install git-cliff
-        run: |
-          # Install git-cliff directly
-          if [[ "$RUNNER_OS" == "macOS" ]]; then
-            brew install git-cliff
-          else
-            curl -L https://github.com/orhun/git-cliff/releases/download/v2.6.1/git-cliff-2.6.1-x86_64-unknown-linux-gnu.tar.gz | tar xz
-            sudo mv git-cliff-2.6.1/git-cliff /usr/local/bin/
-          fi
+      - name: Set up Mise
+        uses: jdx/mise-action@v2
+
+      - name: Install tools with Mise
+        run: mise install
 
       - name: Check for releasable changes
         id: check
@@ -121,15 +117,11 @@ jobs:
       - name: Install dependencies
         run: mix deps.get
 
-      - name: Install git-cliff
-        run: |
-          # Install git-cliff directly
-          if [[ "$RUNNER_OS" == "macOS" ]]; then
-            brew install git-cliff
-          else
-            curl -L https://github.com/orhun/git-cliff/releases/download/v2.6.1/git-cliff-2.6.1-x86_64-unknown-linux-gnu.tar.gz | tar xz
-            sudo mv git-cliff-2.6.1/git-cliff /usr/local/bin/
-          fi
+      - name: Set up Mise
+        uses: jdx/mise-action@v2
+
+      - name: Install tools with Mise
+        run: mise install
 
       - name: Update version in mix.exs
         run: |
