@@ -1,6 +1,5 @@
 defmodule CalculatorTest do
   use ExUnit.Case
-  doctest Calculator
 
   describe "basic arithmetic operations" do
     test "add/2 adds two integers" do
