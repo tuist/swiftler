@@ -6,9 +6,9 @@ This guide will help you get up and running with Swiftler in your Elixir project
 
 Before you begin, ensure you have the following installed:
 
-- **Elixir** 1.18.0 or later
+- **Elixir** 1.18.0 or later with OTP 27.0+
 - **Swift** 6.0 or later
-- **macOS** or Linux (macOS is the primary development platform)
+- **macOS** (primary platform) or Linux
 
 You can verify your installations:
 
@@ -17,7 +17,15 @@ elixir --version
 swift --version
 ```
 
+### Platform-Specific Notes
+
+**macOS**: Swiftler works out of the box with Xcode's Swift toolchain.
+
+**Linux**: Ensure you have the Swift runtime libraries installed. You can download Swift from [swift.org](https://swift.org/download/).
+
 ## Installation
+
+### From Hex
 
 Add Swiftler to your `mix.exs` dependencies:
 
@@ -33,6 +41,18 @@ Then fetch the dependency:
 
 ```bash
 mix deps.get
+```
+
+### From GitHub (Development)
+
+For the latest development version:
+
+```elixir
+def deps do
+  [
+    {:swiftler, github: "tuist/swiftler"}
+  ]
+end
 ```
 
 ## Your First Swift NIF

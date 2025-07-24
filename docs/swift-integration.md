@@ -52,7 +52,7 @@ Declares the NIF library and its exported functions:
 
 ## Type Mappings
 
-Swiftler automatically converts between Swift and Elixir types:
+Swiftler currently supports basic types with automatic conversion:
 
 | Swift Type | Elixir Type | Notes |
 |------------|-------------|-------|
@@ -61,25 +61,30 @@ Swiftler automatically converts between Swift and Elixir types:
 | `String` | `:string` | UTF-8 encoded |
 | `Bool` | `:bool` | `true`/`false` |
 
-### Custom Type Example
+> **Note**: Arrays, dictionaries, and custom types are not yet supported but are planned for future releases.
+
+### Working with Supported Types
 
 ```swift
 // Swift
-struct Point {
-    let x: Double
-    let y: Double
+@nif func calculate(_ price: Double, _ taxRate: Double) -> Double {
+    price * (1 + taxRate)
 }
 
-@nif func distance(_ p1: Point, _ p2: Point) -> Double {
-    let dx = p2.x - p1.x
-    let dy = p2.y - p1.y
-    return sqrt(dx * dx + dy * dy)
+@nif func isValidEmail(_ email: String) -> Bool {
+    email.contains("@") && email.contains(".")
+}
+
+@nif func concatenate(_ a: String, _ b: String) -> String {
+    a + " " + b
 }
 ```
 
 ```elixir
 # Elixir
-swift_function distance(p1: :tuple, p2: :tuple) :: :double
+swift_function calculate(price: :double, tax_rate: :double) :: :double
+swift_function is_valid_email(email: :string) :: :bool
+swift_function concatenate(a: :string, b: :string) :: :string
 ```
 
 ## Memory Management
@@ -102,43 +107,77 @@ Swift's automatic reference counting (ARC) works seamlessly with NIFs:
 
 ## Advanced Patterns
 
-### Working with Collections
+### String Processing
+
+Since Swiftler currently supports basic types, you can create powerful string processing functions:
 
 ```swift
-@nif func sum(_ numbers: [Int]) -> Int {
-    numbers.reduce(0, +)
+@nif func sanitize(_ input: String) -> String {
+    input
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+        .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
 }
 
-@nif func frequencies(_ words: [String]) -> [String: Int] {
-    words.reduce(into: [:]) { counts, word in
-        counts[word, default: 0] += 1
+@nif func extractDomain(_ url: String) -> String {
+    guard let url = URL(string: url),
+          let host = url.host else {
+        return ""
     }
+    return host
 }
 ```
 
-### Async Operations
+### Mathematical Operations
 
-For long-running operations, consider using dirty schedulers:
+```swift
+@nif func fibonacci(_ n: Int) -> Int {
+    guard n > 1 else { return n }
+    var a = 0, b = 1
+    for _ in 2...n {
+        (a, b) = (b, a + b)
+    }
+    return b
+}
+
+@nif func isPrime(_ n: Int) -> Bool {
+    guard n > 1 else { return false }
+    guard n > 3 else { return true }
+    guard n % 2 != 0 && n % 3 != 0 else { return false }
+    
+    var i = 5
+    while i * i <= n {
+        if n % i == 0 || n % (i + 2) == 0 {
+            return false
+        }
+        i += 6
+    }
+    return true
+}
+```
+
+### Working with Multiple Return Values
+
+While tuples aren't directly supported, you can encode multiple values:
+
+```swift
+@nif func divmod(_ a: Int, _ b: Int) -> String {
+    guard b != 0 else { return "error:division_by_zero" }
+    let quotient = a / b
+    let remainder = a % b
+    return "\(quotient),\(remainder)"
+}
+```
 
 ```elixir
-defmodule HeavyComputation do
-  use Swiftler, otp_app: :my_app
-  
-  # Mark as dirty NIF
-  swift_function compute(data: :binary) :: :binary, 
-    schedule: :dirty_cpu
+# In Elixir, parse the result
+def divmod(a, b) do
+  case YourModule.divmod(a, b) do
+    "error:" <> reason -> {:error, String.to_atom(reason)}
+    result ->
+      [q, r] = String.split(result, ",") |> Enum.map(&String.to_integer/1)
+      {q, r}
+  end
 end
-```
-
-### Working with Binary Data
-
-```swift
-@nif func processImage(_ imageData: Data) -> Data {
-    // Process binary data
-    var processed = imageData
-    // ... image processing logic
-    return processed
-}
 ```
 
 ## Debugging Swift NIFs
@@ -187,45 +226,50 @@ private let logger = Logger(subsystem: "com.example.mynifs", category: "NIF")
 
 ## Performance Optimization
 
-### 1. Minimize Allocations
+### 1. Keep Functions Fast
+
+NIFs run on scheduler threads, so keep execution time under 1ms:
 
 ```swift
-// Avoid
-@nif func inefficient(_ n: Int) -> [Int] {
-    var result: [Int] = []
-    for i in 0..<n {
-        result.append(i * i)  // Multiple allocations
-    }
-    return result
+// Good: Fast computation
+@nif func fastHash(_ input: String) -> Int {
+    input.hash
 }
 
-// Prefer
-@nif func efficient(_ n: Int) -> [Int] {
-    (0..<n).map { $0 * $0 }  // Single allocation
+// Avoid: Long-running computation
+@nif func slowComputation(_ n: Int) -> Int {
+    // If this takes > 1ms, consider breaking it up
+    // or using ports/GenServer instead
 }
 ```
 
-### 2. Use Value Types
+### 2. Efficient String Operations
 
 ```swift
-// Prefer structs over classes for NIF data
-struct ComputationResult {
-    let value: Double
-    let iterations: Int
+@nif func optimizedTrim(_ input: String) -> String {
+    // Use Swift's efficient string APIs
+    input.trimmingCharacters(in: .whitespacesAndNewlines)
 }
 
-@nif func compute(_ input: Double) -> ComputationResult {
-    // ... computation logic
-    return ComputationResult(value: result, iterations: count)
+@nif func fastValidate(_ email: String) -> Bool {
+    // Quick validation without regex compilation
+    let parts = email.split(separator: "@")
+    return parts.count == 2 && parts[1].contains(".")
 }
 ```
 
-### 3. Batch Operations
+### 3. Precompute When Possible
 
 ```swift
-@nif func batchProcess(_ items: [String]) -> [String] {
-    // Process all items in one NIF call
-    items.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+// Precompute constants outside the NIF function
+private let emailRegex = try! NSRegularExpression(
+    pattern: #"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$"#,
+    options: [.caseInsensitive]
+)
+
+@nif func validateEmailRegex(_ email: String) -> Bool {
+    let range = NSRange(location: 0, length: email.utf16.count)
+    return emailRegex.firstMatch(in: email, options: [], range: range) != nil
 }
 ```
 
@@ -269,41 +313,54 @@ end
 
 ## Common Pitfalls
 
-### 1. String Encoding
+### 1. NIF Execution Time
 
-Always ensure strings are UTF-8 encoded:
+Remember that NIFs block the scheduler:
 
 ```swift
-@nif func processText(_ text: String) -> String {
-    // Swift strings are always UTF-8
-    text.data(using: .utf8)
-    // ... process
+// Bad: This could block the VM
+@nif func slowOperation(_ input: String) -> String {
+    Thread.sleep(forTimeInterval: 0.1)  // Never do this!
+    return input
+}
+
+// Good: Keep it fast
+@nif func fastOperation(_ input: String) -> String {
+    input.uppercased()  // Microseconds
 }
 ```
 
-### 2. Integer Overflow
+### 2. Error Handling
 
-Be aware of integer size differences:
+Since exceptions can't cross the NIF boundary, handle errors gracefully:
 
 ```swift
-@nif func safePower(_ base: Int, _ exp: Int) -> Int? {
-    let (result, overflow) = base.multipliedReportingOverflow(by: exp)
-    return overflow ? nil : result
+// Bad: This will crash the VM
+@nif func divide(_ a: Int, _ b: Int) -> Int {
+    a / b  // Crashes on division by zero
+}
+
+// Good: Safe error handling
+@nif func safeDivide(_ a: Int, _ b: Int) -> String {
+    guard b != 0 else { return "error:division_by_zero" }
+    return String(a / b)
 }
 ```
 
-### 3. Resource Leaks
+### 3. Integer Overflow
 
-Clean up resources properly:
+Be aware of integer limits:
 
 ```swift
-@nif func processFile(_ path: String) -> String? {
-    guard let file = FileHandle(forReadingAtPath: path) else {
-        return nil
-    }
-    defer { file.closeFile() }  // Always clean up
+@nif func factorial(_ n: Int) -> String {
+    guard n >= 0 else { return "error:negative_input" }
+    guard n <= 20 else { return "error:too_large" }  // 21! overflows Int64
     
-    // ... process file
+    var result = 1
+    for i in 1...n {
+        result *= i
+    }
+    return String(result)
 }
 ```
 

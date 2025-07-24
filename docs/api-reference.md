@@ -44,25 +44,23 @@ swift_function function_name(param: :type, ...) :: :return_type
 - `:double` - 64-bit floating point
 - `:string` - UTF-8 string
 - `:bool` - Boolean value
-- `:binary` - Binary data
-- `:tuple` - Tuple (for compound types)
-- `:list` - List of supported types
-- `:map` - Map with string keys
+
+> **Note**: Binary data, tuples, lists, and maps are not yet supported but are planned for future releases.
 
 #### Examples
 
 ```elixir
-# Basic function
+# Integer arithmetic
 swift_function add(a: :int, b: :int) :: :int
 
 # String manipulation
-swift_function format(template: :string, values: :list) :: :string
+swift_function uppercase(text: :string) :: :string
 
-# Complex types
-swift_function process(data: :map) :: :tuple
+# Boolean operations
+swift_function is_even(n: :int) :: :bool
 
-# Optional scheduling
-swift_function heavy_compute(input: :binary) :: :binary, schedule: :dirty_cpu
+# Floating point math
+swift_function calculate_area(radius: :double) :: :double
 ```
 
 ### Mix Tasks
@@ -130,8 +128,11 @@ Marks a Swift function for export as a NIF.
     sqrt(x * x + y * y)
 }
 
-@nif func parseJSON(_ json: String) -> [String: Any]? {
-    // JSON parsing implementation
+@nif func isValidJSON(_ json: String) -> Bool {
+    // Check if string is valid JSON
+    json.data(using: .utf8).flatMap { data in
+        try? JSONSerialization.jsonObject(with: data)
+    } != nil
 }
 ```
 
@@ -191,40 +192,26 @@ Swiftler automatically handles conversions between Swift and Erlang types:
 @nif func half(_ x: Double) -> Double { x / 2.0 }
 ```
 
-#### Collections
+#### Working with Limited Types
+
+Since Swiftler currently supports only basic types, you can encode complex data as strings:
 
 ```swift
-// Arrays
-@nif func sum(_ numbers: [Int]) -> Int {
-    numbers.reduce(0, +)
+// Encode multiple values as JSON string
+@nif func getPoint() -> String {
+    let point = ["x": 10.0, "y": 20.0]
+    let data = try! JSONSerialization.data(withJSONObject: point)
+    return String(data: data, encoding: .utf8)!
 }
 
-// Dictionaries
-@nif func counts(_ items: [String]) -> [String: Int] {
-    items.reduce(into: [:]) { counts, item in
-        counts[item, default: 0] += 1
-    }
-}
-```
-
-#### Custom Types
-
-For custom types, use tuples or dictionaries:
-
-```swift
-// Return as tuple
-@nif func getPoint() -> (Double, Double) {
-    (x: 10.0, y: 20.0)
+// Encode lists as comma-separated values
+@nif func joinNumbers(_ a: Int, _ b: Int, _ c: Int) -> String {
+    "\(a),\(b),\(c)"
 }
 
-// Return as dictionary
-@nif func getUser(_ id: Int) -> [String: Any] {
-    [
-        "id": id,
-        "name": "John Doe",
-        "active": true
-    ]
-}
+// Parse on the Elixir side
+// point_json = MyNIFs.get_point()
+// {:ok, point} = Jason.decode(point_json)
 ```
 
 ## Configuration
@@ -267,41 +254,35 @@ let package = Package(
 
 ## Error Handling
 
-### Swift Errors
-
-Swift errors are automatically converted to Elixir error tuples:
+Since Swiftler doesn't yet support Swift's error throwing mechanism across the NIF boundary, handle errors by returning encoded error states:
 
 ```swift
-enum MathError: Error {
-    case divisionByZero
-}
-
-@nif func safeDivide(_ a: Int, _ b: Int) throws -> Int {
+@nif func safeDivide(_ a: Int, _ b: Int) -> String {
     guard b != 0 else {
-        throw MathError.divisionByZero
+        return "error:division_by_zero"
     }
-    return a / b
+    return "ok:\(a / b)"
 }
 ```
 
 In Elixir:
 ```elixir
 case MyNIFs.safe_divide(10, 0) do
-  {:ok, result} -> result
-  {:error, reason} -> # Handle error
+  "ok:" <> result -> String.to_integer(result)
+  "error:" <> reason -> {:error, String.to_atom(reason)}
 end
 ```
 
-### Fatal Errors
+### Validation
 
-Use `fatalError` for unrecoverable errors:
+Use guard statements to validate inputs:
 
 ```swift
-@nif func mustSucceed(_ input: String) -> String {
-    guard !input.isEmpty else {
-        fatalError("Input cannot be empty")
+@nif func sqrt(_ n: Double) -> Double {
+    guard n >= 0 else {
+        return Double.nan  // Return NaN for invalid input
     }
-    return process(input)
+    return n.squareRoot()
 }
 ```
 
@@ -317,12 +298,9 @@ Keep NIF execution under 1 millisecond:
     n * 2
 }
 
-// For longer operations, use dirty schedulers
-@nif func heavyOperation(_ data: Data) -> Data {
-    // Mark as dirty in Elixir:
-    // swift_function heavy_operation(data: :binary) :: :binary, 
-    //   schedule: :dirty_cpu
-}
+// Avoid long-running operations in NIFs
+// Consider breaking them into smaller chunks
+// or using ports/GenServers for heavy computation
 ```
 
 ### Memory Usage
@@ -335,9 +313,14 @@ Be mindful of memory allocation:
     "constant_value"  // No allocation
 }
 
-// Over creating new data
-@nif func createLargeArray(_ size: Int) -> [Int] {
-    Array(repeating: 0, count: size)  // Allocates memory
+// Be careful with string concatenation in loops
+@nif func buildString(_ count: Int) -> String {
+    // This allocates memory for each concatenation
+    var result = ""
+    for i in 0..<count {
+        result += "Item \(i), "
+    }
+    return result
 }
 ```
 

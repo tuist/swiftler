@@ -127,7 +127,7 @@ The NIF library failed to load during module compilation. Check previous error m
 **Error:**
 ```
 ** (ArgumentError) Invalid type: :invalid_type. 
-Supported types are: [:int, :double, :string, :bool, :binary, :tuple, :list, :map]
+Supported types are: [:int, :double, :string, :bool]
 ```
 
 **Solution:**
@@ -135,9 +135,11 @@ Use only supported types in `swift_function` declarations:
 ```elixir
 # Valid
 swift_function process(data: :string) :: :int
+swift_function calculate(value: :double) :: :double
 
-# Invalid
-swift_function process(data: :atom) :: :float
+# Invalid (not yet supported)
+swift_function process(data: :binary) :: :list
+swift_function handle(data: :map) :: :tuple
 ```
 
 ### Type Mismatch
@@ -206,19 +208,11 @@ export LD_LIBRARY_PATH=/usr/lib/swift/linux:$LD_LIBRARY_PATH
    }
    ```
 
-2. **Use dirty schedulers for long operations:**
-   ```elixir
-   swift_function heavy_compute(data: :binary) :: :binary, 
-     schedule: :dirty_cpu
-   ```
+2. **Break up long operations:**
+   Instead of processing everything in one NIF call, consider breaking the work into smaller chunks that can be processed iteratively from Elixir.
 
-3. **Batch operations:**
-   ```swift
-   // Instead of calling multiple times
-   @nif func processBatch(_ items: [String]) -> [String] {
-       items.map { processOne($0) }
-   }
-   ```
+3. **Use ports or GenServers for heavy computation:**
+   For operations that take more than 1ms, consider using Erlang ports or GenServers to avoid blocking the scheduler.
 
 ### Memory Leaks
 
@@ -315,7 +309,7 @@ If you encounter issues not covered here:
 1. **Forgetting to export functions in `#nifLibrary`**
 2. **Mismatched function names between Swift and Elixir**
 3. **Using unsupported types**
-4. **Long-running operations without dirty schedulers**
+4. **Long-running operations in NIFs** (keep under 1ms)
 5. **Not handling errors in Swift code**
 6. **Assuming Swift compilation is instant** (it can take minutes)
 

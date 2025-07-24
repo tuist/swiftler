@@ -1,0 +1,150 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-release:
+    name: Check if release is needed
+    runs-on: ubuntu-latest
+    outputs:
+      should-release: ${{ steps.check.outputs.should-release }}
+      new-version: ${{ steps.check.outputs.new-version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Mise
+        uses: jdx/mise-action@v2
+        with:
+          version: latest
+
+      - name: Install tools with Mise
+        run: mise install
+
+      - name: Check for releasable changes
+        id: check
+        run: |
+          # Get the current version from mix.exs
+          CURRENT_VERSION=$(grep '@version' mix.exs | sed -E 's/.*"(.*)".*/\1/')
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Get the last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "Last tag: $LAST_TAG"
+          
+          # Check if there are conventional commits since last tag
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"%s" --no-merges)
+          else
+            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s" --no-merges)
+          fi
+          
+          # Check for conventional commits that trigger releases
+          SHOULD_RELEASE=false
+          BUMP_TYPE=""
+          
+          if echo "$COMMITS" | grep -q "^feat\|^fix\|BREAKING CHANGE"; then
+            SHOULD_RELEASE=true
+            
+            # Determine bump type
+            if echo "$COMMITS" | grep -q "BREAKING CHANGE"; then
+              BUMP_TYPE="major"
+            elif echo "$COMMITS" | grep -q "^feat"; then
+              BUMP_TYPE="minor"
+            else
+              BUMP_TYPE="patch"
+            fi
+          fi
+          
+          echo "Should release: $SHOULD_RELEASE"
+          echo "Bump type: $BUMP_TYPE"
+          
+          if [ "$SHOULD_RELEASE" = true ]; then
+            # Calculate new version using git-cliff
+            NEW_VERSION=$(git cliff --bumped-version)
+            NEW_VERSION=${NEW_VERSION#v}  # Remove 'v' prefix if present
+            echo "New version: $NEW_VERSION"
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "new-version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "should-release=false" >> $GITHUB_OUTPUT
+          fi
+
+  create-release:
+    name: Create Release
+    needs: check-release
+    if: needs.check-release.outputs.should-release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.18.0'
+          otp-version: '27.0'
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Set up Mise
+        uses: jdx/mise-action@v2
+        with:
+          version: latest
+
+      - name: Install tools with Mise
+        run: mise install
+
+      - name: Update version in mix.exs
+        run: |
+          sed -i 's/@version ".*"/@version "${{ needs.check-release.outputs.new-version }}"/' mix.exs
+
+      - name: Generate changelog for release
+        run: |
+          git cliff --version ${{ needs.check-release.outputs.new-version }} --output RELEASE_NOTES.md
+
+      - name: Update full changelog
+        run: |
+          git cliff --output CHANGELOG.md
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add mix.exs CHANGELOG.md
+          git commit -m "chore(release): prepare release ${{ needs.check-release.outputs.new-version }}"
+
+      - name: Create and push tag
+        run: |
+          git tag -a v${{ needs.check-release.outputs.new-version }} -m "Release ${{ needs.check-release.outputs.new-version }}"
+          git push origin HEAD:main
+          git push origin v${{ needs.check-release.outputs.new-version }}
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ needs.check-release.outputs.new-version }}
+          name: Release ${{ needs.check-release.outputs.new-version }}
+          bodyFile: RELEASE_NOTES.md
+          draft: false
+          prerelease: false
+
+      - name: Publish to Hex.pm
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+        run: |
+          mix hex.publish --yes
