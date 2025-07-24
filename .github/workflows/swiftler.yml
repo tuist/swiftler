@@ -13,11 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: '1.18.0'
-          otp-version: '27.0'
+      - name: Set up Mise
+        uses: jdx/mise-action@v2
+      
+      - name: Install dependencies with Mise
+        run: mise install
       
       - name: Restore dependencies cache
         uses: actions/cache@v4
@@ -55,11 +55,11 @@ jobs:
           fi
           swift --version
       
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: '1.18.0'
-          otp-version: '27.0'
+      - name: Set up Mise
+        uses: jdx/mise-action@v2
+      
+      - name: Install dependencies with Mise
+        run: mise install
       
       - name: Restore dependencies cache
         uses: actions/cache@v4
@@ -101,11 +101,11 @@ jobs:
           fi
           swift --version
       
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: '1.18.0'
-          otp-version: '27.0'
+      - name: Set up Mise
+        uses: jdx/mise-action@v2
+      
+      - name: Install dependencies with Mise
+        run: mise install
       
       - name: Restore dependencies cache
         uses: actions/cache@v4
@@ -143,11 +143,11 @@ jobs:
           fi
           swift --version
       
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: '1.18.0'
-          otp-version: '27.0'
+      - name: Set up Mise
+        uses: jdx/mise-action@v2
+      
+      - name: Install dependencies with Mise
+        run: mise install
       
       - name: Restore dependencies cache
         uses: actions/cache@v4

@@ -108,20 +108,14 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: "1.18.0"
-          otp-version: "27.0"
-
-      - name: Install dependencies
-        run: mix deps.get
-
       - name: Set up Mise
         uses: jdx/mise-action@v2
 
       - name: Install tools with Mise
         run: mise install
+
+      - name: Install Elixir dependencies
+        run: mix deps.get
 
       - name: Update version in mix.exs
         run: |
