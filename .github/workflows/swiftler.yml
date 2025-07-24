@@ -6,29 +6,32 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
   formatting:
     name: Check Formatting
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Mise
         uses: jdx/mise-action@v2
-      
+
       - name: Install dependencies with Mise
         run: mise install
-      
+
       - name: Restore dependencies cache
         uses: actions/cache@v4
         with:
           path: deps
           key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
           restore-keys: ${{ runner.os }}-mix-
-      
+
       - name: Install dependencies
         run: mix deps.get
-      
+
       - name: Check formatting
         run: mix format --check-formatted
 
@@ -37,10 +40,10 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: List available Xcode versions
         run: ls -la /Applications/ | grep Xcode || true
-      
+
       - name: Select Xcode 16
         run: |
           # Try different possible Xcode 16 paths
@@ -54,26 +57,26 @@ jobs:
             echo "Warning: Xcode 16 not found, using default"
           fi
           swift --version
-      
+
       - name: Set up Mise
         uses: jdx/mise-action@v2
-      
+
       - name: Install dependencies with Mise
         run: mise install
-      
+
       - name: Restore dependencies cache
         uses: actions/cache@v4
         with:
           path: deps
           key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
           restore-keys: ${{ runner.os }}-mix-
-      
+
       - name: Install dependencies
         run: mix deps.get
-      
+
       - name: Compile Elixir
         run: mix compile --warnings-as-errors
-      
+
       - name: Build Swift package
         run: swift build -Xswiftc -warnings-as-errors
         working-directory: .
@@ -83,10 +86,10 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: List available Xcode versions
         run: ls -la /Applications/ | grep Xcode || true
-      
+
       - name: Select Xcode 16
         run: |
           # Try different possible Xcode 16 paths
@@ -100,23 +103,23 @@ jobs:
             echo "Warning: Xcode 16 not found, using default"
           fi
           swift --version
-      
+
       - name: Set up Mise
         uses: jdx/mise-action@v2
-      
+
       - name: Install dependencies with Mise
         run: mise install
-      
+
       - name: Restore dependencies cache
         uses: actions/cache@v4
         with:
           path: deps
           key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
           restore-keys: ${{ runner.os }}-mix-
-      
+
       - name: Install dependencies
         run: mix deps.get
-      
+
       - name: Run Elixir tests
         run: mix test
 
@@ -125,10 +128,10 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: List available Xcode versions
         run: ls -la /Applications/ | grep Xcode || true
-      
+
       - name: Select Xcode 16
         run: |
           # Try different possible Xcode 16 paths
@@ -142,13 +145,13 @@ jobs:
             echo "Warning: Xcode 16 not found, using default"
           fi
           swift --version
-      
+
       - name: Set up Mise
         uses: jdx/mise-action@v2
-      
+
       - name: Install dependencies with Mise
         run: mise install
-      
+
       - name: Restore dependencies cache
         uses: actions/cache@v4
         with:
@@ -157,18 +160,18 @@ jobs:
             example/calculator/deps
           key: ${{ runner.os }}-example-${{ hashFiles('**/mix.lock') }}
           restore-keys: ${{ runner.os }}-example-
-      
+
       - name: Install Swiftler dependencies
         run: mix deps.get
-      
+
       - name: Install example dependencies
         run: mix deps.get
         working-directory: example/calculator
-      
+
       - name: Compile example
         run: mix compile
         working-directory: example/calculator
-      
+
       - name: Run example tests
         run: mix test
         working-directory: example/calculator
