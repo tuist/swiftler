@@ -104,27 +104,13 @@ defmodule Swiftler.Compiler do
     # Determine build directory - use current directory if Package.swift exists, otherwise use native/
     build_dir = if File.exists?("Package.swift"), do: ".", else: "native"
 
-    # Use Task.async with timeout to prevent hanging on SwiftSyntax compilation during development
-    # Default 30 seconds, but configurable via environment variable
-    timeout = System.get_env("SWIFTLER_BUILD_TIMEOUT", "30000") |> String.to_integer()
-
-    task =
-      Task.async(fn ->
-        System.cmd("swift", build_args, cd: build_dir, stderr_to_stdout: true)
-      end)
-
-    case Task.yield(task, timeout) do
-      {:ok, {_output, 0}} ->
+    # Run Swift build command
+    case System.cmd("swift", build_args, cd: build_dir, stderr_to_stdout: true) do
+      {_output, 0} ->
         :ok
 
-      {:ok, {output, _}} ->
+      {output, _} ->
         {:error, "Swift build failed: #{output}"}
-
-      nil ->
-        Task.shutdown(task, :brutal_kill)
-
-        {:error,
-         "Swift build timed out (#{div(timeout, 1000)}s). This usually happens when compiling SwiftSyntax for the first time. Please run 'mix swift.compile' manually."}
     end
   end
 

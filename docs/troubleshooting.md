@@ -4,26 +4,21 @@ This guide helps you resolve common issues when using Swiftler.
 
 ## Compilation Issues
 
-### Swift Build Timeout
+### Slow Swift Build
 
-**Error:**
-```
-Failed to compile Swift code for package swiftler: Swift build timed out (30s). 
-This usually happens when compiling SwiftSyntax for the first time. 
-Please run 'mix swift.compile' manually.
-```
+**Issue:**
+Swift compilation taking a long time, especially on first build.
 
 **Solution:**
-SwiftSyntax compilation can take 5-10 minutes on first build. Run manually:
+SwiftSyntax compilation can take 5-10 minutes on first build. The compilation will wait as long as needed. You can monitor progress by running:
 
 ```bash
 mix swift.compile
 ```
 
-The timeout is configurable via environment variable:
-```bash
-export SWIFTLER_BUILD_TIMEOUT=600000  # 10 minutes (in milliseconds)
-```
+To speed up compilation:
+- Use Xcode 16 or later which includes precompiled SwiftSyntax
+- Ensure you have sufficient system resources available
 
 ### Swift Compiler Not Found
 
