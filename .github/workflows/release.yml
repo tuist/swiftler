@@ -49,17 +49,20 @@ jobs:
             COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s" --no-merges)
           fi
           
+          echo "Commits to check:"
+          echo "$COMMITS"
+          
           # Check for conventional commits that trigger releases
           SHOULD_RELEASE=false
           BUMP_TYPE=""
           
-          if echo "$COMMITS" | grep -q "^feat\|^fix\|BREAKING CHANGE"; then
+          if echo "$COMMITS" | grep -E "^(feat|fix):" > /dev/null || echo "$COMMITS" | grep "BREAKING CHANGE" > /dev/null; then
             SHOULD_RELEASE=true
             
             # Determine bump type
-            if echo "$COMMITS" | grep -q "BREAKING CHANGE"; then
+            if echo "$COMMITS" | grep "BREAKING CHANGE" > /dev/null; then
               BUMP_TYPE="major"
-            elif echo "$COMMITS" | grep -q "^feat"; then
+            elif echo "$COMMITS" | grep -E "^feat:" > /dev/null; then
               BUMP_TYPE="minor"
             else
               BUMP_TYPE="patch"
@@ -70,9 +73,22 @@ jobs:
           echo "Bump type: $BUMP_TYPE"
           
           if [ "$SHOULD_RELEASE" = true ]; then
-            # Calculate new version using git-cliff
-            NEW_VERSION=$(git cliff --bumped-version)
-            NEW_VERSION=${NEW_VERSION#v}  # Remove 'v' prefix if present
+            # Parse current version
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+            
+            # Calculate new version based on bump type
+            case $BUMP_TYPE in
+              major)
+                NEW_VERSION="$((MAJOR + 1)).0.0"
+                ;;
+              minor)
+                NEW_VERSION="${MAJOR}.$((MINOR + 1)).0"
+                ;;
+              patch)
+                NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+                ;;
+            esac
+            
             echo "New version: $NEW_VERSION"
             echo "should-release=true" >> $GITHUB_OUTPUT
             echo "new-version=$NEW_VERSION" >> $GITHUB_OUTPUT
@@ -115,7 +131,13 @@ jobs:
 
       - name: Generate changelog for release
         run: |
-          git cliff --version ${{ needs.check-release.outputs.new-version }} --output RELEASE_NOTES.md
+          # Generate changelog for this release
+          if [ -z "$(git tag -l)" ]; then
+            # No tags exist yet, generate changelog from all commits
+            git cliff --tag v${{ needs.check-release.outputs.new-version }} --output RELEASE_NOTES.md
+          else
+            git cliff --tag v${{ needs.check-release.outputs.new-version }} --unreleased --output RELEASE_NOTES.md
+          fi
 
       - name: Update full changelog
         run: |
