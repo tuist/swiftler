@@ -14,13 +14,13 @@ jobs:
     name: Check Formatting
     strategy:
       matrix:
-        os: [macos-15, ubuntu-latest]
+        os: [namespace-profile-default-macos, namespace-profile-default-arm64]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Swift on Ubuntu
-        if: matrix.os == 'ubuntu-latest'
+      - name: Set up Swift on Linux
+        if: matrix.os == 'namespace-profile-default-arm64'
         uses: swift-actions/setup-swift@v2
         with:
           swift-version: "6.0.2"
@@ -48,17 +48,17 @@ jobs:
     name: Compile
     strategy:
       matrix:
-        os: [macos-15, ubuntu-latest]
+        os: [namespace-profile-default-macos, namespace-profile-default-arm64]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
       - name: List available Xcode versions
-        if: matrix.os == 'macos-15'
+        if: matrix.os == 'namespace-profile-default-macos'
         run: ls -la /Applications/ | grep Xcode || true
 
       - name: Select Xcode 16
-        if: matrix.os == 'macos-15'
+        if: matrix.os == 'namespace-profile-default-macos'
         run: |
           # Try different possible Xcode 16 paths
           if [ -d "/Applications/Xcode_16.0.app" ]; then
@@ -72,8 +72,8 @@ jobs:
           fi
           swift --version
 
-      - name: Set up Swift on Ubuntu
-        if: matrix.os == 'ubuntu-latest'
+      - name: Set up Swift on Linux
+        if: matrix.os == 'namespace-profile-default-arm64'
         uses: swift-actions/setup-swift@v2
         with:
           swift-version: "6.0.2"
@@ -105,17 +105,17 @@ jobs:
     name: Run Tests
     strategy:
       matrix:
-        os: [macos-15, ubuntu-latest]
+        os: [namespace-profile-default-macos, namespace-profile-default-arm64]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
       - name: List available Xcode versions
-        if: matrix.os == 'macos-15'
+        if: matrix.os == 'namespace-profile-default-macos'
         run: ls -la /Applications/ | grep Xcode || true
 
       - name: Select Xcode 16
-        if: matrix.os == 'macos-15'
+        if: matrix.os == 'namespace-profile-default-macos'
         run: |
           # Try different possible Xcode 16 paths
           if [ -d "/Applications/Xcode_16.0.app" ]; then
@@ -129,8 +129,8 @@ jobs:
           fi
           swift --version
 
-      - name: Set up Swift on Ubuntu
-        if: matrix.os == 'ubuntu-latest'
+      - name: Set up Swift on Linux
+        if: matrix.os == 'namespace-profile-default-arm64'
         uses: swift-actions/setup-swift@v2
         with:
           swift-version: "6.0.2"
@@ -158,17 +158,17 @@ jobs:
     name: Test Example
     strategy:
       matrix:
-        os: [macos-15, ubuntu-latest]
+        os: [namespace-profile-default-macos, namespace-profile-default-arm64]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
       - name: List available Xcode versions
-        if: matrix.os == 'macos-15'
+        if: matrix.os == 'namespace-profile-default-macos'
         run: ls -la /Applications/ | grep Xcode || true
 
       - name: Select Xcode 16
-        if: matrix.os == 'macos-15'
+        if: matrix.os == 'namespace-profile-default-macos'
         run: |
           # Try different possible Xcode 16 paths
           if [ -d "/Applications/Xcode_16.0.app" ]; then
@@ -182,8 +182,8 @@ jobs:
           fi
           swift --version
 
-      - name: Set up Swift on Ubuntu
-        if: matrix.os == 'ubuntu-latest'
+      - name: Set up Swift on Linux
+        if: matrix.os == 'namespace-profile-default-arm64'
         uses: swift-actions/setup-swift@v2
         with:
           swift-version: "6.0.2"
