@@ -45,6 +45,9 @@ jobs:
           sudo apt-get install -y erlang elixir
           # Verify installations
           elixir --version
+          # Install Hex and Rebar
+          mix local.hex --force
+          mix local.rebar --force
           
       - name: Set up Mise
         if: matrix.os != 'namespace-profile-default'
@@ -121,6 +124,9 @@ jobs:
           sudo apt-get install -y erlang elixir
           # Verify installations
           elixir --version
+          # Install Hex and Rebar
+          mix local.hex --force
+          mix local.rebar --force
           
       - name: Set up Mise
         if: matrix.os != 'namespace-profile-default'
@@ -201,6 +207,9 @@ jobs:
           sudo apt-get install -y erlang elixir
           # Verify installations
           elixir --version
+          # Install Hex and Rebar
+          mix local.hex --force
+          mix local.rebar --force
           
       - name: Set up Mise
         if: matrix.os != 'namespace-profile-default'
@@ -277,6 +286,9 @@ jobs:
           sudo apt-get install -y erlang elixir
           # Verify installations
           elixir --version
+          # Install Hex and Rebar
+          mix local.hex --force
+          mix local.rebar --force
           
       - name: Set up Mise
         if: matrix.os != 'namespace-profile-default'
