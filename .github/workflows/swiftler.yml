@@ -29,7 +29,7 @@ jobs:
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
-          # Install Swift 6.1 on Linux (6.2 is not yet released)
+          # Install Swift 6.1 on Linux
           wget https://download.swift.org/swift-6.1-release/ubuntu2204/swift-6.1-RELEASE/swift-6.1-RELEASE-ubuntu22.04.tar.gz
           tar xzf swift-6.1-RELEASE-ubuntu22.04.tar.gz
           sudo mv swift-6.1-RELEASE-ubuntu22.04 /usr/share/swift
@@ -103,7 +103,7 @@ jobs:
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
-          # Install Swift 6.1 on Linux (6.2 is not yet released)
+          # Install Swift 6.1 on Linux
           wget https://download.swift.org/swift-6.1-release/ubuntu2204/swift-6.1-RELEASE/swift-6.1-RELEASE-ubuntu22.04.tar.gz
           tar xzf swift-6.1-RELEASE-ubuntu22.04.tar.gz
           sudo mv swift-6.1-RELEASE-ubuntu22.04 /usr/share/swift
@@ -181,7 +181,7 @@ jobs:
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
-          # Install Swift 6.1 on Linux (6.2 is not yet released)
+          # Install Swift 6.1 on Linux
           wget https://download.swift.org/swift-6.1-release/ubuntu2204/swift-6.1-RELEASE/swift-6.1-RELEASE-ubuntu22.04.tar.gz
           tar xzf swift-6.1-RELEASE-ubuntu22.04.tar.gz
           sudo mv swift-6.1-RELEASE-ubuntu22.04 /usr/share/swift
@@ -255,7 +255,7 @@ jobs:
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
-          # Install Swift 6.1 on Linux (6.2 is not yet released)
+          # Install Swift 6.1 on Linux
           wget https://download.swift.org/swift-6.1-release/ubuntu2204/swift-6.1-RELEASE/swift-6.1-RELEASE-ubuntu22.04.tar.gz
           tar xzf swift-6.1-RELEASE-ubuntu22.04.tar.gz
           sudo mv swift-6.1-RELEASE-ubuntu22.04 /usr/share/swift
