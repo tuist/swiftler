@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Details
 #### 🐛 Bug Fixes
+- Use _nif_init symbol on all Unix systems and suppress unused variable warnings - ([ab8b5eb](https://github.com/tuist/swiftler/commit/ab8b5ebc01d4c2db2d228d737a294fec95d85fb0)) by @pepicrft
+
+## [0.2.4] - 2025-07-25
+### Details
+#### 🐛 Bug Fixes
 - Check for any dynamic library in compiled_library_exists? - ([72ae69b](https://github.com/tuist/swiftler/commit/72ae69b6760eba061e765bc5a020fea7047da466)) by @pepicrft
 
 ## [0.2.3] - 2025-07-25
