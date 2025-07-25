@@ -23,7 +23,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: "6.0"
+          swift-version: "6.0.2"
 
       - name: Set up Mise
         uses: jdx/mise-action@v2
@@ -76,7 +76,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: "6.0"
+          swift-version: "6.0.2"
 
       - name: Set up Mise
         uses: jdx/mise-action@v2
@@ -133,7 +133,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: "6.0"
+          swift-version: "6.0.2"
 
       - name: Set up Mise
         uses: jdx/mise-action@v2
@@ -186,7 +186,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: "6.0"
+          swift-version: "6.0.2"
 
       - name: Set up Mise
         uses: jdx/mise-action@v2
