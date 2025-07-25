@@ -64,7 +64,15 @@ defmodule Swiftler.Compiler do
   end
 
   defp compiled_library_exists? do
-    File.exists?("priv/libswiftler.dylib") or File.exists?("priv/libswiftler.so")
+    # Check if any dynamic library exists in priv/
+    if File.exists?("priv") do
+      File.ls!("priv")
+      |> Enum.any?(fn file ->
+        String.ends_with?(file, ".dylib") or String.ends_with?(file, ".so")
+      end)
+    else
+      false
+    end
   end
 
   defp needs_compilation? do
