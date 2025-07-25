@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Details
+#### ✨ Features
+- Implement manifest-based compilation tracking like Rustler - ([95d916c](https://github.com/tuist/swiftler/commit/95d916c2b4b5107f3d8cc74af49ee6d19814341a)) by @pepicrft
+- Add workarounds for long SwiftSyntax compilation times - ([15e9faf](https://github.com/tuist/swiftler/commit/15e9fafba447a43f72709107919af96c03ea9a40)) by @pepicrft
+
+#### 🐛 Bug Fixes
+- Use Task.async/await for timeout instead of invalid System.cmd option - ([23e9508](https://github.com/tuist/swiftler/commit/23e9508849e6d481cc20bc2ceb9229ee321e8ea6)) by @pepicrft
+
+## [0.2.6] - 2025-07-25
+### Details
 #### 🐛 Bug Fixes
 - Revert to Swift 6.1 on Linux - ([7df392f](https://github.com/tuist/swiftler/commit/7df392f0439202e7cbb9676017f3379af558a250)) by @pepicrft
 
