@@ -21,9 +21,14 @@ jobs:
 
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default-arm64'
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: "6.0.2"
+        run: |
+          # Install Swift 6.0.2 on Linux ARM64
+          wget https://download.swift.org/swift-6.0.2-release/ubuntu2204-aarch64/swift-6.0.2-RELEASE/swift-6.0.2-RELEASE-ubuntu22.04-aarch64.tar.gz
+          tar xzf swift-6.0.2-RELEASE-ubuntu22.04-aarch64.tar.gz
+          sudo mv swift-6.0.2-RELEASE-ubuntu22.04-aarch64 /usr/share/swift
+          echo "export PATH=/usr/share/swift/usr/bin:$PATH" >> $GITHUB_ENV
+          echo "/usr/share/swift/usr/bin" >> $GITHUB_PATH
+          swift --version
 
       - name: Set up Mise
         uses: jdx/mise-action@v2
@@ -74,9 +79,14 @@ jobs:
 
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default-arm64'
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: "6.0.2"
+        run: |
+          # Install Swift 6.0.2 on Linux ARM64
+          wget https://download.swift.org/swift-6.0.2-release/ubuntu2204-aarch64/swift-6.0.2-RELEASE/swift-6.0.2-RELEASE-ubuntu22.04-aarch64.tar.gz
+          tar xzf swift-6.0.2-RELEASE-ubuntu22.04-aarch64.tar.gz
+          sudo mv swift-6.0.2-RELEASE-ubuntu22.04-aarch64 /usr/share/swift
+          echo "export PATH=/usr/share/swift/usr/bin:$PATH" >> $GITHUB_ENV
+          echo "/usr/share/swift/usr/bin" >> $GITHUB_PATH
+          swift --version
 
       - name: Set up Mise
         uses: jdx/mise-action@v2
@@ -131,9 +141,14 @@ jobs:
 
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default-arm64'
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: "6.0.2"
+        run: |
+          # Install Swift 6.0.2 on Linux ARM64
+          wget https://download.swift.org/swift-6.0.2-release/ubuntu2204-aarch64/swift-6.0.2-RELEASE/swift-6.0.2-RELEASE-ubuntu22.04-aarch64.tar.gz
+          tar xzf swift-6.0.2-RELEASE-ubuntu22.04-aarch64.tar.gz
+          sudo mv swift-6.0.2-RELEASE-ubuntu22.04-aarch64 /usr/share/swift
+          echo "export PATH=/usr/share/swift/usr/bin:$PATH" >> $GITHUB_ENV
+          echo "/usr/share/swift/usr/bin" >> $GITHUB_PATH
+          swift --version
 
       - name: Set up Mise
         uses: jdx/mise-action@v2
@@ -184,9 +199,14 @@ jobs:
 
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default-arm64'
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: "6.0.2"
+        run: |
+          # Install Swift 6.0.2 on Linux ARM64
+          wget https://download.swift.org/swift-6.0.2-release/ubuntu2204-aarch64/swift-6.0.2-RELEASE/swift-6.0.2-RELEASE-ubuntu22.04-aarch64.tar.gz
+          tar xzf swift-6.0.2-RELEASE-ubuntu22.04-aarch64.tar.gz
+          sudo mv swift-6.0.2-RELEASE-ubuntu22.04-aarch64 /usr/share/swift
+          echo "export PATH=/usr/share/swift/usr/bin:$PATH" >> $GITHUB_ENV
+          echo "/usr/share/swift/usr/bin" >> $GITHUB_PATH
+          swift --version
 
       - name: Set up Mise
         uses: jdx/mise-action@v2
