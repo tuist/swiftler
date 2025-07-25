@@ -38,7 +38,7 @@ defmodule Swiftler.MixProject do
 
   defp package do
     [
-      files: ~w(lib priv mix.exs README* LICENSE* CHANGELOG* docs),
+      files: ~w(lib mix.exs README* LICENSE* CHANGELOG* docs),
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/tuist/swiftler"}
     ]

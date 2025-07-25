@@ -64,27 +64,72 @@ defmodule Swiftler.Compiler do
   end
 
   defp compiled_library_exists? do
-    # Check if any dynamic library exists in priv/
+    # Check if the specific library exists in priv/
     if File.exists?("priv") do
+      # Look for the expected library name based on Package.swift
+      package_name = get_package_name()
+      
       File.ls!("priv")
       |> Enum.any?(fn file ->
-        String.ends_with?(file, ".dylib") or String.ends_with?(file, ".so")
+        # Check for lib{PackageName}.dylib or lib{PackageName}.so
+        (String.starts_with?(file, "lib#{package_name}") and
+          (String.ends_with?(file, ".dylib") or String.ends_with?(file, ".so")))
       end)
     else
       false
     end
   end
 
+  defp get_package_name do
+    # Extract package name from Package.swift
+    package_path = if File.exists?("Package.swift"), do: "Package.swift", else: "native/Package.swift"
+    
+    if File.exists?(package_path) do
+      content = File.read!(package_path)
+      
+      # Find the library product name
+      case Regex.run(~r/\.library\s*\(\s*name:\s*"([^"]+)"/, content) do
+        [_, name] -> name
+        _ -> "swiftler"
+      end
+    else
+      "swiftler"
+    end
+  end
+
   defp needs_compilation? do
     # Always compile if no library exists
-    not compiled_library_exists?()
+    if not compiled_library_exists?() do
+      true
+    else
+      # Check if any source files have changed
+      manifest_path = Path.join(Mix.Project.manifest_path(), ".swift_compile")
+      
+      if not File.exists?(manifest_path) do
+        true
+      else
+        case read_manifest(manifest_path) do
+          {:ok, manifest} ->
+            # Check if any source files have changed
+            current_sources = get_swift_sources()
+            sources_changed?(manifest.sources, current_sources)
+          
+          {:error, _} ->
+            # If we can't read the manifest, recompile
+            true
+        end
+      end
+    end
   end
 
   defp compile_swift_directly do
     with :ok <- ensure_swift_available(),
          :ok <- ensure_native_directory(),
+         sources = get_swift_sources(),
          :ok <- compile_with_spm(),
          :ok <- generate_dynamic_bindings() do
+      # Write manifest after successful compilation
+      write_manifest(sources)
       :ok
     else
       error -> error
@@ -112,18 +157,18 @@ defmodule Swiftler.Compiler do
 
   defp compile_with_spm do
     # Build the Swift package
-    build_args = ["build", "-c", "release"]
-
-    # Force recompilation using a trick similar to Rustler
-    # Add a unique define flag to ensure fresh builds when needed
-    timestamp = System.system_time(:millisecond)
-    build_args = build_args ++ ["-Xswiftc", "-DSWIFTLER_BUILD_#{timestamp}"]
+    build_args = ["build", "-c", "release", "--product", get_package_name()]
 
     # Determine build directory - use current directory if Package.swift exists, otherwise use native/
     build_dir = if File.exists?("Package.swift"), do: ".", else: "native"
 
-    # Run Swift build command
-    case System.cmd("swift", build_args, cd: build_dir, stderr_to_stdout: true) do
+    # Run Swift build command with a reasonable timeout
+    # Note: First builds can take 5-10+ minutes due to SwiftSyntax compilation
+    timeout = if System.get_env("CI"), do: 600_000, else: 300_000  # 10 min in CI, 5 min locally
+    
+    IO.puts("Building Swift package (this may take several minutes on first build due to SwiftSyntax)...")
+    
+    case System.cmd("swift", build_args, [cd: build_dir, stderr_to_stdout: true, timeout: timeout]) do
       {_output, 0} ->
         :ok
 
@@ -286,5 +331,101 @@ defmodule Swiftler.Compiler do
 
     # Return all Swift-related files
     package_files ++ swift_files
+  end
+
+  # Get Swift sources with modification times
+  defp get_swift_sources do
+    # Get sources from the current project
+    local_sources = get_swift_sources_paths()
+    
+    # Also include Swiftler library sources that affect the generated code
+    swiftler_root = find_swiftler_root()
+    swiftler_sources = if swiftler_root do
+      # Include macro sources and support files that affect code generation
+      [
+        Path.join([swiftler_root, "Sources", "SwiftlerMacros", "SwiftlerMacros.swift"]),
+        Path.join([swiftler_root, "Sources", "Swiftler", "Swiftler.swift"]),
+        Path.join([swiftler_root, "Sources", "SwiftlerSupport", "**", "*.swift"])
+      ]
+      |> Enum.flat_map(&Path.wildcard/1)
+      |> Enum.filter(&File.exists?/1)
+    else
+      []
+    end
+    
+    (local_sources ++ swiftler_sources)
+    |> Enum.map(fn path ->
+      stat = File.stat!(path)
+      {path, stat.mtime}
+    end)
+  end
+
+  # Find the Swiftler library root directory
+  defp find_swiftler_root do
+    # When running in the example, Swiftler is at ../../..
+    # When running as a dependency, it would be in deps/swiftler
+    cond do
+      # Running in example/calculator
+      File.exists?("../../../Package.swift") and File.exists?("../../../Sources/Swiftler") ->
+        Path.expand("../../..")
+      
+      # Running as a dependency
+      File.exists?("deps/swiftler/Package.swift") ->
+        "deps/swiftler"
+        
+      # Default case - we're in the Swiftler project itself
+      File.exists?("Package.swift") and File.exists?("Sources/Swiftler") ->
+        "."
+        
+      true ->
+        nil
+    end
+  end
+
+  # Check if sources have changed
+  defp sources_changed?(old_sources, new_sources) do
+    # Convert to maps for easier comparison
+    old_map = Map.new(old_sources)
+    new_map = Map.new(new_sources)
+
+    # Check if any files were added or removed
+    if Map.keys(old_map) != Map.keys(new_map) do
+      true
+    else
+      # Check if any file was modified
+      Enum.any?(new_map, fn {path, mtime} ->
+        old_mtime = Map.get(old_map, path)
+        old_mtime != mtime
+      end)
+    end
+  end
+
+  # Read manifest file
+  defp read_manifest(path) do
+    case File.read(path) do
+      {:ok, contents} ->
+        try do
+          manifest = :erlang.binary_to_term(contents)
+          {:ok, manifest}
+        rescue
+          _ -> {:error, :invalid_manifest}
+        end
+
+      error ->
+        error
+    end
+  end
+
+  # Write manifest file
+  defp write_manifest(sources) do
+    manifest_path = Path.join(Mix.Project.manifest_path(), ".swift_compile")
+    
+    manifest = %{
+      sources: sources,
+      timestamp: System.system_time()
+    }
+
+    File.mkdir_p!(Path.dirname(manifest_path))
+    File.write!(manifest_path, :erlang.term_to_binary(manifest))
   end
 end

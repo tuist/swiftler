@@ -12,7 +12,8 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(path: "../../..")
+        // Use local path to avoid recompiling SwiftSyntax
+        .package(name: "swiftler", path: "../../..")
     ],
     targets: [
         .target(
