@@ -107,3 +107,4 @@ rustler-study/
 
 # Dynamic libraries
 *.dylib
+*.so

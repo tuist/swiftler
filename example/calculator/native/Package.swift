@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "CalculatorNative",
-    platforms: [.macOS(.v13)],
+    platforms: [.macOS(.v13), .custom("linux", versionString: "0.0.0")],
     products: [
         .library(
             name: "CalculatorNative",

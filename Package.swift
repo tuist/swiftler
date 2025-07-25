@@ -4,7 +4,7 @@ import CompilerPluginSupport
 
 let package = Package(
     name: "Swiftler",
-    platforms: [.macOS(.v13), .iOS(.v16), .tvOS(.v16), .watchOS(.v9), .visionOS(.v1)],
+    platforms: [.macOS(.v13), .iOS(.v16), .tvOS(.v16), .watchOS(.v9), .visionOS(.v1), .custom("linux", versionString: "0.0.0")],
     products: [
         .library(
             name: "Swiftler",
