@@ -8,9 +8,11 @@ defmodule Swiftler.Macros do
     {typed_args, _arg_types} = parse_args(args || [])
 
     # Generate function parameter names for the function definition
+    # Prefix with underscore to avoid unused variable warnings
     param_names =
       Enum.map(typed_args, fn name ->
-        {name, [], nil}
+        underscore_name = String.to_atom("_#{name}")
+        {underscore_name, [], nil}
       end)
 
     quote do
@@ -28,9 +30,11 @@ defmodule Swiftler.Macros do
     {typed_args, _arg_types} = parse_args(args || [])
 
     # Generate function parameter names for the function definition
+    # Prefix with underscore to avoid unused variable warnings
     param_names =
       Enum.map(typed_args, fn name ->
-        {name, [], nil}
+        underscore_name = String.to_atom("_#{name}")
+        {underscore_name, [], nil}
       end)
 
     quote do
