@@ -19,6 +19,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check system info on Linux
+        if: matrix.os == 'namespace-profile-default'
+        run: |
+          lsb_release -a
+          cat /etc/os-release
+          ldd --version
+
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
@@ -30,10 +37,24 @@ jobs:
           # Test that Swift is working
           /usr/share/swift/usr/bin/swift --version
 
+      - name: Install Elixir/Erlang on Linux
+        if: matrix.os == 'namespace-profile-default'
+        run: |
+          # Add Erlang Solutions repository
+          wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb
+          sudo dpkg -i erlang-solutions_2.0_all.deb
+          sudo apt-get update
+          # Install Erlang and Elixir
+          sudo apt-get install -y esl-erlang elixir
+          # Verify installations
+          elixir --version
+          
       - name: Set up Mise
+        if: matrix.os != 'namespace-profile-default'
         uses: jdx/mise-action@v2
 
       - name: Install dependencies with Mise
+        if: matrix.os != 'namespace-profile-default'
         run: mise install
 
       - name: Restore dependencies cache
@@ -77,6 +98,13 @@ jobs:
           fi
           swift --version
 
+      - name: Check system info on Linux
+        if: matrix.os == 'namespace-profile-default'
+        run: |
+          lsb_release -a
+          cat /etc/os-release
+          ldd --version
+
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
@@ -88,10 +116,24 @@ jobs:
           # Test that Swift is working
           /usr/share/swift/usr/bin/swift --version
 
+      - name: Install Elixir/Erlang on Linux
+        if: matrix.os == 'namespace-profile-default'
+        run: |
+          # Add Erlang Solutions repository
+          wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb
+          sudo dpkg -i erlang-solutions_2.0_all.deb
+          sudo apt-get update
+          # Install Erlang and Elixir
+          sudo apt-get install -y esl-erlang elixir
+          # Verify installations
+          elixir --version
+          
       - name: Set up Mise
+        if: matrix.os != 'namespace-profile-default'
         uses: jdx/mise-action@v2
 
       - name: Install dependencies with Mise
+        if: matrix.os != 'namespace-profile-default'
         run: mise install
 
       - name: Restore dependencies cache
@@ -139,6 +181,13 @@ jobs:
           fi
           swift --version
 
+      - name: Check system info on Linux
+        if: matrix.os == 'namespace-profile-default'
+        run: |
+          lsb_release -a
+          cat /etc/os-release
+          ldd --version
+
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
@@ -150,10 +199,24 @@ jobs:
           # Test that Swift is working
           /usr/share/swift/usr/bin/swift --version
 
+      - name: Install Elixir/Erlang on Linux
+        if: matrix.os == 'namespace-profile-default'
+        run: |
+          # Add Erlang Solutions repository
+          wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb
+          sudo dpkg -i erlang-solutions_2.0_all.deb
+          sudo apt-get update
+          # Install Erlang and Elixir
+          sudo apt-get install -y esl-erlang elixir
+          # Verify installations
+          elixir --version
+          
       - name: Set up Mise
+        if: matrix.os != 'namespace-profile-default'
         uses: jdx/mise-action@v2
 
       - name: Install dependencies with Mise
+        if: matrix.os != 'namespace-profile-default'
         run: mise install
 
       - name: Restore dependencies cache
@@ -197,6 +260,13 @@ jobs:
           fi
           swift --version
 
+      - name: Check system info on Linux
+        if: matrix.os == 'namespace-profile-default'
+        run: |
+          lsb_release -a
+          cat /etc/os-release
+          ldd --version
+
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
@@ -208,10 +278,24 @@ jobs:
           # Test that Swift is working
           /usr/share/swift/usr/bin/swift --version
 
+      - name: Install Elixir/Erlang on Linux
+        if: matrix.os == 'namespace-profile-default'
+        run: |
+          # Add Erlang Solutions repository
+          wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb
+          sudo dpkg -i erlang-solutions_2.0_all.deb
+          sudo apt-get update
+          # Install Erlang and Elixir
+          sudo apt-get install -y esl-erlang elixir
+          # Verify installations
+          elixir --version
+          
       - name: Set up Mise
+        if: matrix.os != 'namespace-profile-default'
         uses: jdx/mise-action@v2
 
       - name: Install dependencies with Mise
+        if: matrix.os != 'namespace-profile-default'
         run: mise install
 
       - name: Restore dependencies cache
