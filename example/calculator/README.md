@@ -2,12 +2,20 @@
 
 This example demonstrates how to use Swiftler to create Swift-powered NIFs for Elixir.
 
+## Known Issues
+
+1. **Long compilation times**: The first build compiles SwiftSyntax which takes 5-10 minutes.
+2. **Symbol not found errors**: If you get `_nif_init: symbol not found` errors, the Swift macro cache may be outdated. Clean rebuild with: `rm -rf native/.build native/.swiftpm`
+
 ## First Time Setup
 
-The first build will compile SwiftSyntax which can take 5-10 minutes. To avoid this during `mix compile`, you can build the Swift library separately:
+To avoid long compilation during `mix compile`, build the Swift library separately:
 
 ```bash
-# Build Swift library (only needed once, takes 5-10 minutes)
+# Clean any cached builds
+rm -rf native/.build native/.swiftpm _build priv
+
+# Build Swift library (takes 5-10 minutes on first build)
 ./build_swift.sh
 
 # Now you can run mix commands without rebuilding Swift
