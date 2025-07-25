@@ -217,8 +217,13 @@ public struct NIFLibraryMacro: DeclarationMacro {
         }.joined(separator: ",\n        ")
         
         // Generate nif_init function
+        // On Linux, we need to use _nif_init instead of nif_init
         let initFunction = """
+            #if os(Linux)
+            @_cdecl("_nif_init")
+            #else
             @_cdecl("nif_init")
+            #endif
             func nif_init() -> UnsafePointer<ErlNifEntry>? {
                 let funcs: [ErlNifFunc] = [
                     \(functionEntries)
