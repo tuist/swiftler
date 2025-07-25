@@ -163,14 +163,18 @@ defmodule Swiftler.Compiler do
   defp find_library_path(app_path, package_name) do
     priv_dir = Path.join(app_path, "priv")
 
-    # Try different library naming conventions
+    # On macOS, only look for .dylib; on Linux, only look for .so
+    extension =
+      case :os.type() do
+        {:unix, :darwin} -> ".dylib"
+        _ -> ".so"
+      end
+
+    # Try different library naming conventions with the correct extension
     possible_names = [
-      "lib#{package_name}.dylib",
-      "lib#{package_name}.so",
-      "libswiftler.dylib",
-      "libswiftler.so",
-      "#{package_name}.dylib",
-      "#{package_name}.so"
+      "lib#{package_name}#{extension}",
+      "libswiftler#{extension}",
+      "#{package_name}#{extension}"
     ]
 
     # First try the expected names
@@ -190,8 +194,8 @@ defmodule Swiftler.Compiler do
 
   defp find_any_dynamic_library(priv_dir) do
     if File.exists?(priv_dir) do
-      # Prefer the correct extension for the current platform
-      preferred_ext =
+      # Only look for the correct extension for the current platform
+      extension =
         case :os.type() do
           {:unix, :darwin} -> ".dylib"
           _ -> ".so"
@@ -200,11 +204,7 @@ defmodule Swiftler.Compiler do
       libs =
         File.ls!(priv_dir)
         |> Enum.filter(fn file ->
-          String.ends_with?(file, ".dylib") or String.ends_with?(file, ".so")
-        end)
-        |> Enum.sort_by(fn file ->
-          # Sort to prefer the platform-specific extension
-          if String.ends_with?(file, preferred_ext), do: 0, else: 1
+          String.ends_with?(file, extension)
         end)
 
       case libs do
