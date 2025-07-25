@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Details
 #### 🐛 Bug Fixes
+- Create .so symlink on macOS for Erlang NIF loader - ([a1ed4ca](https://github.com/tuist/swiftler/commit/a1ed4ca7195780a08531ba09b6565b2eb13cb445)) by @pepicrft
+- Apply mix format - ([54b4002](https://github.com/tuist/swiftler/commit/54b40027491dabb81ad604cc15c65b08146cd497)) by @pepicrft
+
+## [0.2.2] - 2025-07-25
+### Details
+#### 🐛 Bug Fixes
 - Ensure correct library extension is used when loading NIF - ([ed80362](https://github.com/tuist/swiftler/commit/ed80362d36a3542d79c9794c068ca1f2de1cf3cd)) by @pepicrft
 
 ## [0.2.1] - 2025-07-25
