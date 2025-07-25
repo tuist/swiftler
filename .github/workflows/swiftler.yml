@@ -29,10 +29,10 @@ jobs:
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
-          # Install Swift 6.0.2 on Linux
-          wget https://download.swift.org/swift-6.0.2-release/ubuntu2204/swift-6.0.2-RELEASE/swift-6.0.2-RELEASE-ubuntu22.04.tar.gz
-          tar xzf swift-6.0.2-RELEASE-ubuntu22.04.tar.gz
-          sudo mv swift-6.0.2-RELEASE-ubuntu22.04 /usr/share/swift
+          # Install Swift 6.2 on Linux
+          wget https://download.swift.org/swift-6.2-release/ubuntu2204/swift-6.2-RELEASE/swift-6.2-RELEASE-ubuntu22.04.tar.gz
+          tar xzf swift-6.2-RELEASE-ubuntu22.04.tar.gz
+          sudo mv swift-6.2-RELEASE-ubuntu22.04 /usr/share/swift
           echo "/usr/share/swift/usr/bin" >> $GITHUB_PATH
           # Test that Swift is working
           /usr/share/swift/usr/bin/swift --version
@@ -78,18 +78,18 @@ jobs:
         if: matrix.os == 'namespace-profile-default-macos'
         run: ls -la /Applications/ | grep Xcode || true
 
-      - name: Select Xcode 16
+      - name: Select Xcode 26.0-Beta
         if: matrix.os == 'namespace-profile-default-macos'
         run: |
-          # Try different possible Xcode 16 paths
-          if [ -d "/Applications/Xcode_16.0.app" ]; then
-            sudo xcode-select -s /Applications/Xcode_16.0.app
-          elif [ -d "/Applications/Xcode_16_beta.app" ]; then
-            sudo xcode-select -s /Applications/Xcode_16_beta.app
-          elif [ -d "/Applications/Xcode-16.0.0.app" ]; then
-            sudo xcode-select -s /Applications/Xcode-16.0.0.app
+          # Try different possible Xcode 26.0-Beta paths
+          if [ -d "/Applications/Xcode_26.0-beta.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_26.0-beta.app
+          elif [ -d "/Applications/Xcode-26.0-beta.app" ]; then
+            sudo xcode-select -s /Applications/Xcode-26.0-beta.app
+          elif [ -d "/Applications/Xcode_26_beta.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_26_beta.app
           else
-            echo "Warning: Xcode 16 not found, using default"
+            echo "Warning: Xcode 26.0-Beta not found, using default"
           fi
           swift --version
 
@@ -103,10 +103,10 @@ jobs:
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
-          # Install Swift 6.0.2 on Linux
-          wget https://download.swift.org/swift-6.0.2-release/ubuntu2204/swift-6.0.2-RELEASE/swift-6.0.2-RELEASE-ubuntu22.04.tar.gz
-          tar xzf swift-6.0.2-RELEASE-ubuntu22.04.tar.gz
-          sudo mv swift-6.0.2-RELEASE-ubuntu22.04 /usr/share/swift
+          # Install Swift 6.2 on Linux
+          wget https://download.swift.org/swift-6.2-release/ubuntu2204/swift-6.2-RELEASE/swift-6.2-RELEASE-ubuntu22.04.tar.gz
+          tar xzf swift-6.2-RELEASE-ubuntu22.04.tar.gz
+          sudo mv swift-6.2-RELEASE-ubuntu22.04 /usr/share/swift
           echo "/usr/share/swift/usr/bin" >> $GITHUB_PATH
           # Test that Swift is working
           /usr/share/swift/usr/bin/swift --version
@@ -156,18 +156,18 @@ jobs:
         if: matrix.os == 'namespace-profile-default-macos'
         run: ls -la /Applications/ | grep Xcode || true
 
-      - name: Select Xcode 16
+      - name: Select Xcode 26.0-Beta
         if: matrix.os == 'namespace-profile-default-macos'
         run: |
-          # Try different possible Xcode 16 paths
-          if [ -d "/Applications/Xcode_16.0.app" ]; then
-            sudo xcode-select -s /Applications/Xcode_16.0.app
-          elif [ -d "/Applications/Xcode_16_beta.app" ]; then
-            sudo xcode-select -s /Applications/Xcode_16_beta.app
-          elif [ -d "/Applications/Xcode-16.0.0.app" ]; then
-            sudo xcode-select -s /Applications/Xcode-16.0.0.app
+          # Try different possible Xcode 26.0-Beta paths
+          if [ -d "/Applications/Xcode_26.0-beta.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_26.0-beta.app
+          elif [ -d "/Applications/Xcode-26.0-beta.app" ]; then
+            sudo xcode-select -s /Applications/Xcode-26.0-beta.app
+          elif [ -d "/Applications/Xcode_26_beta.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_26_beta.app
           else
-            echo "Warning: Xcode 16 not found, using default"
+            echo "Warning: Xcode 26.0-Beta not found, using default"
           fi
           swift --version
 
@@ -181,10 +181,10 @@ jobs:
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
-          # Install Swift 6.0.2 on Linux
-          wget https://download.swift.org/swift-6.0.2-release/ubuntu2204/swift-6.0.2-RELEASE/swift-6.0.2-RELEASE-ubuntu22.04.tar.gz
-          tar xzf swift-6.0.2-RELEASE-ubuntu22.04.tar.gz
-          sudo mv swift-6.0.2-RELEASE-ubuntu22.04 /usr/share/swift
+          # Install Swift 6.2 on Linux
+          wget https://download.swift.org/swift-6.2-release/ubuntu2204/swift-6.2-RELEASE/swift-6.2-RELEASE-ubuntu22.04.tar.gz
+          tar xzf swift-6.2-RELEASE-ubuntu22.04.tar.gz
+          sudo mv swift-6.2-RELEASE-ubuntu22.04 /usr/share/swift
           echo "/usr/share/swift/usr/bin" >> $GITHUB_PATH
           # Test that Swift is working
           /usr/share/swift/usr/bin/swift --version
@@ -230,18 +230,18 @@ jobs:
         if: matrix.os == 'namespace-profile-default-macos'
         run: ls -la /Applications/ | grep Xcode || true
 
-      - name: Select Xcode 16
+      - name: Select Xcode 26.0-Beta
         if: matrix.os == 'namespace-profile-default-macos'
         run: |
-          # Try different possible Xcode 16 paths
-          if [ -d "/Applications/Xcode_16.0.app" ]; then
-            sudo xcode-select -s /Applications/Xcode_16.0.app
-          elif [ -d "/Applications/Xcode_16_beta.app" ]; then
-            sudo xcode-select -s /Applications/Xcode_16_beta.app
-          elif [ -d "/Applications/Xcode-16.0.0.app" ]; then
-            sudo xcode-select -s /Applications/Xcode-16.0.0.app
+          # Try different possible Xcode 26.0-Beta paths
+          if [ -d "/Applications/Xcode_26.0-beta.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_26.0-beta.app
+          elif [ -d "/Applications/Xcode-26.0-beta.app" ]; then
+            sudo xcode-select -s /Applications/Xcode-26.0-beta.app
+          elif [ -d "/Applications/Xcode_26_beta.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_26_beta.app
           else
-            echo "Warning: Xcode 16 not found, using default"
+            echo "Warning: Xcode 26.0-Beta not found, using default"
           fi
           swift --version
 
@@ -255,10 +255,10 @@ jobs:
       - name: Set up Swift on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
-          # Install Swift 6.0.2 on Linux
-          wget https://download.swift.org/swift-6.0.2-release/ubuntu2204/swift-6.0.2-RELEASE/swift-6.0.2-RELEASE-ubuntu22.04.tar.gz
-          tar xzf swift-6.0.2-RELEASE-ubuntu22.04.tar.gz
-          sudo mv swift-6.0.2-RELEASE-ubuntu22.04 /usr/share/swift
+          # Install Swift 6.2 on Linux
+          wget https://download.swift.org/swift-6.2-release/ubuntu2204/swift-6.2-RELEASE/swift-6.2-RELEASE-ubuntu22.04.tar.gz
+          tar xzf swift-6.2-RELEASE-ubuntu22.04.tar.gz
+          sudo mv swift-6.2-RELEASE-ubuntu22.04 /usr/share/swift
           echo "/usr/share/swift/usr/bin" >> $GITHUB_PATH
           # Test that Swift is working
           /usr/share/swift/usr/bin/swift --version
