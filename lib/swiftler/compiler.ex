@@ -23,14 +23,20 @@ defmodule Swiftler.Compiler do
     app_path = config[:app_path] || File.cwd!()
 
     unless skip_compilation?(opts) do
-      # Compile Swift if library doesn't exist or if sources have changed
-      if needs_compilation?() do
-        case compile_swift_directly() do
-          :ok ->
-            :ok
+      # Check if we have a pre-built library first
+      if has_prebuilt_library?() do
+        IO.puts("Using pre-built Swift library")
+        use_prebuilt_library()
+      else
+        # Compile Swift if library doesn't exist or if sources have changed
+        if needs_compilation?() do
+          case compile_swift_directly() do
+            :ok ->
+              :ok
 
-          {:error, reason} ->
-            raise "Failed to compile Swift code for package #{package_name}: #{reason}"
+            {:error, reason} ->
+              raise "Failed to compile Swift code for package #{package_name}: #{reason}"
+          end
         end
       end
     end
@@ -61,6 +67,51 @@ defmodule Swiftler.Compiler do
   defp skip_compilation?(opts) do
     Keyword.get(opts, :skip_compilation?, false) or
       System.get_env("SWIFTLER_SKIP_COMPILATION") == "true"
+  end
+
+  defp has_prebuilt_library? do
+    # Check if there's a pre-built library in the prebuilt directory
+    prebuilt_dir = "prebuilt"
+    
+    if File.exists?(prebuilt_dir) do
+      extension = case :os.type() do
+        {:unix, :darwin} -> ".dylib"
+        _ -> ".so"
+      end
+      
+      File.ls!(prebuilt_dir)
+      |> Enum.any?(fn file -> String.ends_with?(file, extension) end)
+    else
+      false
+    end
+  end
+
+  defp use_prebuilt_library do
+    prebuilt_dir = "prebuilt"
+    File.mkdir_p!("priv")
+    
+    extension = case :os.type() do
+      {:unix, :darwin} -> ".dylib"
+      _ -> ".so"
+    end
+    
+    # Copy all matching libraries from prebuilt to priv
+    File.ls!(prebuilt_dir)
+    |> Enum.filter(fn file -> String.ends_with?(file, extension) end)
+    |> Enum.each(fn file ->
+      source = Path.join(prebuilt_dir, file)
+      target = Path.join("priv", file)
+      File.cp!(source, target)
+      
+      # Create symlink for macOS if needed
+      if extension == ".dylib" do
+        so_target = String.replace_suffix(target, ".dylib", ".so")
+        File.rm(so_target)
+        File.ln_s(Path.basename(target), so_target)
+      end
+    end)
+    
+    :ok
   end
 
   defp compiled_library_exists? do
@@ -166,7 +217,10 @@ defmodule Swiftler.Compiler do
     # Note: First builds can take 5-10+ minutes due to SwiftSyntax compilation
     timeout = if System.get_env("CI"), do: 600_000, else: 300_000  # 10 min in CI, 5 min locally
     
-    IO.puts("Building Swift package (this may take several minutes on first build due to SwiftSyntax)...")
+    # Check if we're in CI or if the user wants verbose output
+    unless System.get_env("MIX_QUIET") == "true" do
+      IO.puts("Building Swift package (this may take several minutes on first build due to SwiftSyntax)...")
+    end
     
     task = Task.async(fn ->
       System.cmd("swift", build_args, cd: build_dir, stderr_to_stdout: true)
