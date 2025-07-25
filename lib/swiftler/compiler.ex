@@ -174,14 +174,15 @@ defmodule Swiftler.Compiler do
     ]
 
     # First try the expected names
-    found = Enum.find_value(possible_names, fn name ->
-      path = Path.join(priv_dir, name)
+    found =
+      Enum.find_value(possible_names, fn name ->
+        path = Path.join(priv_dir, name)
 
-      if File.exists?(path) do
-        # Return path without extension for :erlang.load_nif
-        Path.join(priv_dir, Path.basename(name, Path.extname(name)))
-      end
-    end)
+        if File.exists?(path) do
+          # Return path without extension for :erlang.load_nif
+          Path.join(priv_dir, Path.basename(name, Path.extname(name)))
+        end
+      end)
 
     # If not found, look for any dynamic library in priv
     found || find_any_dynamic_library(priv_dir) || Path.join(priv_dir, "libswiftler")
@@ -189,8 +190,9 @@ defmodule Swiftler.Compiler do
 
   defp find_any_dynamic_library(priv_dir) do
     if File.exists?(priv_dir) do
-      libs = File.ls!(priv_dir)
-        |> Enum.filter(fn file -> 
+      libs =
+        File.ls!(priv_dir)
+        |> Enum.filter(fn file ->
           String.ends_with?(file, ".dylib") or String.ends_with?(file, ".so")
         end)
         |> Enum.sort()
@@ -199,6 +201,7 @@ defmodule Swiftler.Compiler do
         [lib | _] ->
           # Return path without extension for :erlang.load_nif
           Path.join(priv_dir, Path.basename(lib, Path.extname(lib)))
+
         [] ->
           nil
       end
