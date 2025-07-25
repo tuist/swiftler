@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Details
 #### 🐛 Bug Fixes
+- Check for any dynamic library in compiled_library_exists? - ([72ae69b](https://github.com/tuist/swiftler/commit/72ae69b6760eba061e765bc5a020fea7047da466)) by @pepicrft
+
+## [0.2.3] - 2025-07-25
+### Details
+#### 🐛 Bug Fixes
 - Create .so symlink on macOS for Erlang NIF loader - ([a1ed4ca](https://github.com/tuist/swiftler/commit/a1ed4ca7195780a08531ba09b6565b2eb13cb445)) by @pepicrft
 - Apply mix format - ([54b4002](https://github.com/tuist/swiftler/commit/54b40027491dabb81ad604cc15c65b08146cd497)) by @pepicrft
 
