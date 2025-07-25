@@ -39,15 +39,10 @@ jobs:
 
       - name: Install Elixir/Erlang on Linux
         if: matrix.os == 'namespace-profile-default'
-        run: |
-          # Install Erlang and Elixir from Ubuntu packages
-          sudo apt-get update
-          sudo apt-get install -y erlang elixir
-          # Verify installations
-          elixir --version
-          # Install Hex and Rebar
-          mix local.hex --force
-          mix local.rebar --force
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.18.3'
+          otp-version: '27.3'
           
       - name: Set up Mise
         if: matrix.os != 'namespace-profile-default'
@@ -118,15 +113,10 @@ jobs:
 
       - name: Install Elixir/Erlang on Linux
         if: matrix.os == 'namespace-profile-default'
-        run: |
-          # Install Erlang and Elixir from Ubuntu packages
-          sudo apt-get update
-          sudo apt-get install -y erlang elixir
-          # Verify installations
-          elixir --version
-          # Install Hex and Rebar
-          mix local.hex --force
-          mix local.rebar --force
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.18.3'
+          otp-version: '27.3'
           
       - name: Set up Mise
         if: matrix.os != 'namespace-profile-default'
@@ -201,15 +191,10 @@ jobs:
 
       - name: Install Elixir/Erlang on Linux
         if: matrix.os == 'namespace-profile-default'
-        run: |
-          # Install Erlang and Elixir from Ubuntu packages
-          sudo apt-get update
-          sudo apt-get install -y erlang elixir
-          # Verify installations
-          elixir --version
-          # Install Hex and Rebar
-          mix local.hex --force
-          mix local.rebar --force
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.18.3'
+          otp-version: '27.3'
           
       - name: Set up Mise
         if: matrix.os != 'namespace-profile-default'
@@ -280,15 +265,10 @@ jobs:
 
       - name: Install Elixir/Erlang on Linux
         if: matrix.os == 'namespace-profile-default'
-        run: |
-          # Install Erlang and Elixir from Ubuntu packages
-          sudo apt-get update
-          sudo apt-get install -y erlang elixir
-          # Verify installations
-          elixir --version
-          # Install Hex and Rebar
-          mix local.hex --force
-          mix local.rebar --force
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.18.3'
+          otp-version: '27.3'
           
       - name: Set up Mise
         if: matrix.os != 'namespace-profile-default'
