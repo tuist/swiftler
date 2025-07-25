@@ -40,12 +40,9 @@ jobs:
       - name: Install Elixir/Erlang on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
-          # Add Erlang Solutions repository
-          wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb
-          sudo dpkg -i erlang-solutions_2.0_all.deb
+          # Install Erlang and Elixir from Ubuntu packages
           sudo apt-get update
-          # Install Erlang and Elixir
-          sudo apt-get install -y esl-erlang elixir
+          sudo apt-get install -y erlang elixir
           # Verify installations
           elixir --version
           
@@ -119,12 +116,9 @@ jobs:
       - name: Install Elixir/Erlang on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
-          # Add Erlang Solutions repository
-          wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb
-          sudo dpkg -i erlang-solutions_2.0_all.deb
+          # Install Erlang and Elixir from Ubuntu packages
           sudo apt-get update
-          # Install Erlang and Elixir
-          sudo apt-get install -y esl-erlang elixir
+          sudo apt-get install -y erlang elixir
           # Verify installations
           elixir --version
           
@@ -202,12 +196,9 @@ jobs:
       - name: Install Elixir/Erlang on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
-          # Add Erlang Solutions repository
-          wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb
-          sudo dpkg -i erlang-solutions_2.0_all.deb
+          # Install Erlang and Elixir from Ubuntu packages
           sudo apt-get update
-          # Install Erlang and Elixir
-          sudo apt-get install -y esl-erlang elixir
+          sudo apt-get install -y erlang elixir
           # Verify installations
           elixir --version
           
@@ -281,12 +272,9 @@ jobs:
       - name: Install Elixir/Erlang on Linux
         if: matrix.os == 'namespace-profile-default'
         run: |
-          # Add Erlang Solutions repository
-          wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb
-          sudo dpkg -i erlang-solutions_2.0_all.deb
+          # Install Erlang and Elixir from Ubuntu packages
           sudo apt-get update
-          # Install Erlang and Elixir
-          sudo apt-get install -y esl-erlang elixir
+          sudo apt-get install -y erlang elixir
           # Verify installations
           elixir --version
           
