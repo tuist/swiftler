@@ -135,12 +135,8 @@ defmodule Swiftler.Compiler do
         # Determine target filename based on source
         source_filename = Path.basename(dynamic_lib_path)
 
-        target_filename =
-          case Path.extname(source_filename) do
-            ".dylib" -> "libswiftler.dylib"
-            ".so" -> "libswiftler.so"
-            _ -> "libswiftler.so"
-          end
+        # Keep the original filename from Swift Package Manager
+        target_filename = source_filename
 
         target_path = Path.join("priv", target_filename)
 
@@ -177,14 +173,38 @@ defmodule Swiftler.Compiler do
       "#{package_name}.so"
     ]
 
-    Enum.find_value(possible_names, fn name ->
+    # First try the expected names
+    found = Enum.find_value(possible_names, fn name ->
       path = Path.join(priv_dir, name)
 
       if File.exists?(path) do
         # Return path without extension for :erlang.load_nif
         Path.join(priv_dir, Path.basename(name, Path.extname(name)))
       end
-    end) || Path.join(priv_dir, "libswiftler")
+    end)
+
+    # If not found, look for any dynamic library in priv
+    found || find_any_dynamic_library(priv_dir) || Path.join(priv_dir, "libswiftler")
+  end
+
+  defp find_any_dynamic_library(priv_dir) do
+    if File.exists?(priv_dir) do
+      libs = File.ls!(priv_dir)
+        |> Enum.filter(fn file -> 
+          String.ends_with?(file, ".dylib") or String.ends_with?(file, ".so")
+        end)
+        |> Enum.sort()
+
+      case libs do
+        [lib | _] ->
+          # Return path without extension for :erlang.load_nif
+          Path.join(priv_dir, Path.basename(lib, Path.extname(lib)))
+        [] ->
+          nil
+      end
+    else
+      nil
+    end
   end
 
   defp get_swift_sources_paths do

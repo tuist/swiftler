@@ -134,12 +134,8 @@ defmodule Mix.Tasks.Compile.Swift do
         # Determine target filename based on source
         source_filename = Path.basename(dynamic_lib_path)
 
-        target_filename =
-          case Path.extname(source_filename) do
-            ".dylib" -> "libswiftler.dylib"
-            ".so" -> "libswiftler.so"
-            _ -> "libswiftler.so"
-          end
+        # Keep the original filename from Swift Package Manager
+        target_filename = source_filename
 
         target_path = Path.join("priv", target_filename)
 
