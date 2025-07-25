@@ -190,12 +190,22 @@ defmodule Swiftler.Compiler do
 
   defp find_any_dynamic_library(priv_dir) do
     if File.exists?(priv_dir) do
+      # Prefer the correct extension for the current platform
+      preferred_ext =
+        case :os.type() do
+          {:unix, :darwin} -> ".dylib"
+          _ -> ".so"
+        end
+
       libs =
         File.ls!(priv_dir)
         |> Enum.filter(fn file ->
           String.ends_with?(file, ".dylib") or String.ends_with?(file, ".so")
         end)
-        |> Enum.sort()
+        |> Enum.sort_by(fn file ->
+          # Sort to prefer the platform-specific extension
+          if String.ends_with?(file, preferred_ext), do: 0, else: 1
+        end)
 
       case libs do
         [lib | _] ->
