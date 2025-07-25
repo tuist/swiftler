@@ -104,3 +104,6 @@ iOSInjectionProject/
 # Test artifacts
 /tmp/
 rustler-study/
+
+# Dynamic libraries
+*.dylib
