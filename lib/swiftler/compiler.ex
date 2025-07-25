@@ -168,7 +168,11 @@ defmodule Swiftler.Compiler do
     
     IO.puts("Building Swift package (this may take several minutes on first build due to SwiftSyntax)...")
     
-    case System.cmd("swift", build_args, [cd: build_dir, stderr_to_stdout: true, timeout: timeout]) do
+    task = Task.async(fn ->
+      System.cmd("swift", build_args, cd: build_dir, stderr_to_stdout: true)
+    end)
+    
+    case Task.await(task, timeout) do
       {_output, 0} ->
         :ok
 
