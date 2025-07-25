@@ -38,9 +38,17 @@ defmodule Swiftler.Compiler do
     # Get Swift source files for external resource tracking
     external_resources = get_swift_sources_paths()
 
+    # Find library path
+    load_from = find_library_path(app_path, package_name)
+    
+    # Log for debugging
+    if System.get_env("DEBUG_SWIFTLER") do
+      IO.puts("Swiftler: app_path=#{app_path}, package_name=#{package_name}, load_from=#{load_from}")
+    end
+
     # Return configuration struct
     %Config{
-      load_from: find_library_path(app_path, package_name),
+      load_from: load_from,
       load_data: Keyword.get(opts, :load_data, 0),
       external_resources: external_resources,
       lib: !skip_compilation?(opts),
@@ -183,8 +191,10 @@ defmodule Swiftler.Compiler do
         path = Path.join(priv_dir, name)
 
         if File.exists?(path) do
-          # Return path without extension for :erlang.load_nif
-          Path.join(priv_dir, Path.basename(name, Path.extname(name)))
+          # For :erlang.load_nif, we need to pass the path without extension
+          # BUT only if the file actually exists with the correct extension
+          # This ensures we're loading the right file
+          Path.join(priv_dir, Path.basename(name, extension))
         end
       end)
 
@@ -210,7 +220,8 @@ defmodule Swiftler.Compiler do
       case libs do
         [lib | _] ->
           # Return path without extension for :erlang.load_nif
-          Path.join(priv_dir, Path.basename(lib, Path.extname(lib)))
+          # Use the specific extension we found
+          Path.join(priv_dir, Path.basename(lib, extension))
 
         [] ->
           nil
