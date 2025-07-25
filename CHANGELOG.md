@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Details
 #### 🐛 Bug Fixes
+- Ensure correct library extension is used when loading NIF - ([ed80362](https://github.com/tuist/swiftler/commit/ed80362d36a3542d79c9794c068ca1f2de1cf3cd)) by @pepicrft
+
+## [0.2.1] - 2025-07-25
+### Details
+#### 🐛 Bug Fixes
 - Use platform-specific library extensions - ([099e62b](https://github.com/tuist/swiftler/commit/099e62be3ae5c45fff9d7856d1ed7c431f5c4df2)) by @pepicrft
 
 ## [0.2.0] - 2025-07-24
