@@ -40,10 +40,12 @@ defmodule Swiftler.Compiler do
 
     # Find library path
     load_from = find_library_path(app_path, package_name)
-    
+
     # Log for debugging - always log in CI
     if System.get_env("CI") || System.get_env("DEBUG_SWIFTLER") do
-      IO.puts("Swiftler compile-time: OS=#{inspect(:os.type())}, app_path=#{app_path}, package_name=#{package_name}, load_from=#{load_from}")
+      IO.puts(
+        "Swiftler compile-time: OS=#{inspect(:os.type())}, app_path=#{app_path}, package_name=#{package_name}, load_from=#{load_from}"
+      )
     end
 
     # Return configuration struct
@@ -149,7 +151,7 @@ defmodule Swiftler.Compiler do
         target_path = Path.join("priv", target_filename)
 
         case File.cp(dynamic_lib_path, target_path) do
-          :ok -> 
+          :ok ->
             # Create symlink for macOS Erlang NIF loader bug
             # Erlang on macOS looks for .so files even though it should look for .dylib
             if String.ends_with?(target_path, ".dylib") do
@@ -158,15 +160,23 @@ defmodule Swiftler.Compiler do
               File.rm(so_path)
               # Create symlink from .so to .dylib
               case File.ln_s(Path.basename(target_path), so_path) do
-                :ok -> :ok
-                {:error, :eexist} -> :ok  # Symlink already exists
-                {:error, reason} -> 
+                :ok ->
+                  :ok
+
+                # Symlink already exists
+                {:error, :eexist} ->
+                  :ok
+
+                {:error, reason} ->
                   IO.warn("Failed to create .so symlink: #{reason}")
                   :ok
               end
             end
+
             :ok
-          {:error, reason} -> {:error, "Failed to copy dynamic library: #{reason}"}
+
+          {:error, reason} ->
+            {:error, "Failed to copy dynamic library: #{reason}"}
         end
     end
   end

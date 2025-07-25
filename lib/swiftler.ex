@@ -64,10 +64,12 @@ defmodule Swiftler do
       def __swiftler_init__ do
         # Load the compiled NIF
         load_path = @load_from |> to_charlist()
-        
+
         # Debug logging in CI
         if System.get_env("CI") do
-          IO.puts("Swiftler runtime: OS=#{inspect(:os.type())}, load_from=#{@load_from}, load_path=#{inspect(load_path)}")
+          IO.puts(
+            "Swiftler runtime: OS=#{inspect(:os.type())}, load_from=#{@load_from}, load_path=#{inspect(load_path)}"
+          )
         end
 
         case :erlang.load_nif(load_path, @load_data) do
