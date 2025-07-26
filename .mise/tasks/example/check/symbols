@@ -89,14 +89,29 @@ if [ "$DOCKER" = "true" ]; then
     
     # Run build in Docker
     docker run --rm -v "$TEMP_DIR:/build" -w /build swift:6.0-jammy bash -c '
+        # Fix permissions
+        chown -R $(whoami) /build
+        chmod -R 755 /build
+        
         cd example/calculator/native
         
+        # Clean any existing build artifacts
+        rm -rf .build
+        
         echo "=== Starting build (this may take several minutes due to SwiftSyntax) ==="
-        if timeout 300 swift build -c release; then
+        echo "Note: First-time SwiftSyntax compilation can take 10-15 minutes"
+        
+        # Try with longer timeout (15 minutes)
+        if timeout 900 swift build -c release; then
             echo "Build completed successfully!"
         else
-            echo "Build timed out or failed after 5 minutes"
+            echo "Build timed out after 15 minutes or failed"
             echo "This is usually due to SwiftSyntax compilation taking too long"
+            echo ""
+            echo "Alternatives:"
+            echo "1. Run 'mise run example:check:symbols-linux-quick' for a quick symbol test"
+            echo "2. Build on a Linux machine directly for faster compilation"
+            echo "3. Use a pre-built SwiftSyntax if available"
             exit 1
         fi
         
