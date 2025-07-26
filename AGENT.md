@@ -200,6 +200,39 @@ Before pushing code or creating pull requests, ensure:
 - Compilation copies dynamic library to `priv/` for NIF loading
 - Manifest tracking enables incremental compilation based on file changes
 
+## NIF Symbol Generation and Compilation
+
+### Swift Macro Expansion
+The Swift macros (`@nif` and `#nifLibrary`) generate C-compatible functions with specific naming patterns:
+- **NIF thunk functions**: `__swiftler_nif_thunk_<function_name>` - C-compatible wrapper functions
+- **NIF init function**: `_nif_init` (with underscore prefix on all platforms) - Library initialization
+- All functions are marked with `@_cdecl` attribute to ensure C-compatible symbol export
+
+### Symbol Export Requirements
+- Functions must be marked as `public` to be exported from the dynamic library
+- The `@_cdecl` attribute creates unmangled C symbols
+- Swift's dead code elimination may remove unused functions - all NIF functions must be referenced in the `nif_init` function table
+- Use `-undefined dynamic_lookup` linker flag on macOS to allow undefined NIF symbols (enif_* functions provided by Erlang runtime)
+
+### Platform-Specific Compilation
+
+**macOS:**
+- Produces `.dylib` files
+- Symbols are prefixed with underscore (e.g., `_nif_init`, `___swiftler_nif_thunk_add`)
+- Link with: `clang -shared -undefined dynamic_lookup -o lib.dylib *.o -L/usr/lib/swift -lswiftCore -lswiftFoundation`
+
+**Linux:**
+- Produces `.so` files
+- Symbols do not have underscore prefix (e.g., `nif_init`, `__swiftler_nif_thunk_add`)
+- Can be built in Docker with Swift and Erlang development headers installed
+
+### Known Issues and Workarounds
+- **SwiftSyntax compilation timeout**: The macro dependency on SwiftSyntax can cause very long compilation times (5-10+ minutes)
+  - Workaround: Manually expand macros for testing or use pre-built macro plugins
+  - Alternative: Create a minimal Package.swift without Swiftler dependency for manual NIF generation
+- **Symbol visibility**: Ensure all NIF-related types and functions are marked as `public`
+- **Dead code elimination**: Reference all NIF functions in the `nif_init` function's function table
+
 ## Current Development Status
 
 The project is in active development with working macro system and dynamic library generation. The Swift macros generate C-compatible NIF code, and the compilation process creates loadable dynamic libraries for Elixir NIF integration.
@@ -209,3 +242,4 @@ The project is in active development with working macro system and dynamic libra
 - Manifest tracking to detect source file changes
 - Compile-time Swift compilation when using `use Swiftler`
 - Integration with Mix compiler pipeline via `:swift` compiler
+- Manual macro expansion examples for debugging and testing NIF generation
