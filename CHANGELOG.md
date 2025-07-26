@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Details
 #### ✨ Features
+- Add check_nif_symbols.sh script for verifying NIF exports - ([02b47b0](https://github.com/tuist/swiftler/commit/02b47b03a5526c152ae0a918d73dc128461cf372)) by @pepicrft
+
+#### 📚 Documentation
+- Update calculator README with known issues and clean build instructions - ([7d16f06](https://github.com/tuist/swiftler/commit/7d16f06956929cad524f727be64eebc6481037dc)) by @pepicrft
+- Add NIF symbol generation and compilation details to AGENT.md - ([b85e258](https://github.com/tuist/swiftler/commit/b85e258e3337d4c25179dff9ff606bc81034b40b)) by @pepicrft
+
+## [0.3.0] - 2025-07-25
+### Details
+#### ✨ Features
 - Implement manifest-based compilation tracking like Rustler - ([95d916c](https://github.com/tuist/swiftler/commit/95d916c2b4b5107f3d8cc74af49ee6d19814341a)) by @pepicrft
 - Add workarounds for long SwiftSyntax compilation times - ([15e9faf](https://github.com/tuist/swiftler/commit/15e9fafba447a43f72709107919af96c03ea9a40)) by @pepicrft
 
