@@ -1,0 +1,166 @@
+#!/usr/bin/env bash
+#MISE description="Build calculator example and check NIF symbols"
+#USAGE flag "--docker" help="Build and check symbols using Docker (Linux)"
+#USAGE flag "--build-only" help="Only build, don't check symbols"
+#USAGE flag "--check-only" help="Only check symbols, don't build (requires path)"
+#USAGE arg "[library-path]" help="Path to pre-built library (only with --check-only)"
+
+set -e
+
+# Parse flags from environment variables set by mise
+DOCKER="${usage_docker:-false}"
+BUILD_ONLY="${usage_build_only:-false}"
+CHECK_ONLY="${usage_check_only:-false}"
+LIBRARY_PATH="${usage_library_path:-}"
+
+# Validation
+if [ "$BUILD_ONLY" = "true" ] && [ "$CHECK_ONLY" = "true" ]; then
+    echo "Error: Cannot use both --build-only and --check-only"
+    exit 1
+fi
+
+if [ "$CHECK_ONLY" = "true" ] && [ -z "$LIBRARY_PATH" ]; then
+    echo "Error: --check-only requires a library path"
+    echo "Usage: mise run example:check:symbols --check-only <library-path>"
+    exit 1
+fi
+
+# Function to check NIF symbols
+check_symbols() {
+    local library="$1"
+    
+    if [ ! -f "$library" ]; then
+        echo "Error: Library not found: $library"
+        return 1
+    fi
+    
+    echo "Checking NIF symbols in: $library"
+    echo "================================"
+    
+    # Detect platform
+    if [[ "$OSTYPE" == "linux-gnu"* ]] || [ "$DOCKER" = "true" ]; then
+        # Linux
+        echo "Platform: Linux"
+        echo ""
+        echo "NIF symbols (should show nif_init and __swiftler_nif_thunk_*):"
+        nm -D "$library" 2>/dev/null | grep -E "T (nif_init|__swiftler_nif_thunk)" || echo "No NIF symbols found"
+        echo ""
+        echo "All exported symbols:"
+        nm -D "$library" 2>/dev/null | grep " T " | head -20
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        echo "Platform: macOS"
+        echo ""
+        echo "NIF symbols (should show _nif_init and ___swiftler_nif_thunk_*):"
+        nm -gU "$library" 2>/dev/null | grep -E "T (_nif_init|___swiftler_nif_thunk)" || echo "No NIF symbols found"
+        echo ""
+        echo "All exported symbols:"
+        nm -gU "$library" 2>/dev/null | grep " T " | head -20
+    else
+        echo "Unsupported platform: $OSTYPE"
+        return 1
+    fi
+}
+
+# Handle check-only mode
+if [ "$CHECK_ONLY" = "true" ]; then
+    check_symbols "$LIBRARY_PATH"
+    exit $?
+fi
+
+# Build the calculator example
+if [ "$DOCKER" = "true" ]; then
+    # Docker build for Linux
+    if ! command -v docker &> /dev/null; then
+        echo "Error: Docker is required but not installed"
+        exit 1
+    fi
+    
+    echo "Building calculator example for Linux in Docker..."
+    
+    # Create a temporary directory for the build
+    TEMP_DIR=$(mktemp -d)
+    echo "Using temporary directory: $TEMP_DIR"
+    
+    # Copy only necessary files
+    cp -r Sources "$TEMP_DIR/"
+    cp Package.swift "$TEMP_DIR/"
+    cp -r example "$TEMP_DIR/"
+    
+    # Run build in Docker
+    docker run --rm -v "$TEMP_DIR:/build" -w /build swift:6.0-jammy bash -c '
+        cd example/calculator/native
+        
+        echo "=== Starting build (this may take several minutes due to SwiftSyntax) ==="
+        if timeout 300 swift build -c release; then
+            echo "Build completed successfully!"
+        else
+            echo "Build timed out or failed after 5 minutes"
+            echo "This is usually due to SwiftSyntax compilation taking too long"
+            exit 1
+        fi
+        
+        echo -e "\n=== Finding built libraries ==="
+        find . -name "*.so" -type f
+    '
+    
+    # Find the built library
+    LIBRARY=$(find "$TEMP_DIR/example/calculator/native" -name "*Calculator*.so" -type f | head -1)
+    
+    if [ -z "$LIBRARY" ] || [ ! -f "$LIBRARY" ]; then
+        echo "Error: No calculator library found after build"
+        rm -rf "$TEMP_DIR"
+        exit 1
+    fi
+    
+    echo "Built library: $LIBRARY"
+    
+    # Check symbols if not build-only
+    if [ "$BUILD_ONLY" = "false" ]; then
+        echo ""
+        # Run check in Docker since it's a Linux binary
+        docker run --rm -v "$TEMP_DIR:/build" -w /build swift:6.0-jammy bash -c "
+            cd example/calculator/native
+            LIB=\$(find . -name '*Calculator*.so' -type f | head -1)
+            echo 'Checking NIF symbols in:' \$LIB
+            echo '================================'
+            echo 'Platform: Linux'
+            echo ''
+            echo 'NIF symbols (should show nif_init and __swiftler_nif_thunk_*):'
+            nm -D \"\$LIB\" 2>/dev/null | grep -E 'T (nif_init|__swiftler_nif_thunk)' || echo 'No NIF symbols found'
+            echo ''
+            echo 'All exported symbols:'
+            nm -D \"\$LIB\" 2>/dev/null | grep ' T ' | head -20
+        "
+    fi
+    
+    # Cleanup
+    rm -rf "$TEMP_DIR"
+else
+    # Native build
+    echo "Building calculator example..."
+    cd example/calculator/native
+    swift build -c release
+    echo "Build complete!"
+    
+    # Find the built library
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        LIBRARY=$(find .build -name "*Calculator*.dylib" -type f | head -1)
+    else
+        LIBRARY=$(find .build -name "*Calculator*.so" -type f | head -1)
+    fi
+    
+    if [ -z "$LIBRARY" ]; then
+        echo "Error: No calculator library found"
+        exit 1
+    fi
+    
+    echo "Built library: $LIBRARY"
+    
+    # Check symbols if not build-only
+    if [ "$BUILD_ONLY" = "false" ]; then
+        echo ""
+        cd ../../..
+        check_symbols "example/calculator/native/$LIBRARY"
+    fi
+fi
