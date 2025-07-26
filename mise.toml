@@ -1,4 +1,226 @@
-[tools]
-"elixir" = "1.18.3"
-"erlang" = "27.3.2"
-"ubi:orhun/git-cliff" = "2.9.1"
+[tasks.check-nif-symbols]
+description = "Check NIF symbols in a compiled library"
+run = """
+#!/bin/bash
+set -e
+
+LIBRARY="${1:-}"
+if [ -z "$LIBRARY" ]; then
+    echo "Usage: mise run check-nif-symbols <library-path>"
+    echo "Example: mise run check-nif-symbols .build/arm64-apple-macosx/release/libCalculatorNative.dylib"
+    exit 1
+fi
+
+if [ ! -f "$LIBRARY" ]; then
+    echo "Error: Library not found: $LIBRARY"
+    exit 1
+fi
+
+echo "Checking NIF symbols in: $LIBRARY"
+echo "================================"
+
+# Detect platform
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Linux
+    echo "Platform: Linux"
+    echo ""
+    echo "NIF symbols (should show nif_init and __swiftler_nif_thunk_*):"
+    nm -D "$LIBRARY" 2>/dev/null | grep -E "T (nif_init|__swiftler_nif_thunk)" || echo "No NIF symbols found"
+    echo ""
+    echo "All exported symbols:"
+    nm -D "$LIBRARY" 2>/dev/null | grep " T " | head -20
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    echo "Platform: macOS"
+    echo ""
+    echo "NIF symbols (should show _nif_init and ___swiftler_nif_thunk_*):"
+    nm -gU "$LIBRARY" 2>/dev/null | grep -E "T (_nif_init|___swiftler_nif_thunk)" || echo "No NIF symbols found"
+    echo ""
+    echo "All exported symbols:"
+    nm -gU "$LIBRARY" 2>/dev/null | grep " T " | head -20
+else
+    echo "Unsupported platform: $OSTYPE"
+    exit 1
+fi
+"""
+
+[tasks.build-calculator]
+description = "Build the calculator example"
+run = """
+#!/bin/bash
+set -e
+
+echo "Building calculator example..."
+cd example/calculator/native
+swift build -c release
+echo "Build complete!"
+
+# Find and display the built library
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    DYLIB=$(find .build -name "*.dylib" -type f | grep -E "Calculator" | head -1)
+    if [ -n "$DYLIB" ]; then
+        echo "Built library: $DYLIB"
+        echo "Run 'mise run check-nif-symbols example/calculator/native/$DYLIB' to verify symbols"
+    fi
+else
+    SO=$(find .build -name "*.so" -type f | grep -E "Calculator" | head -1)
+    if [ -n "$SO" ]; then
+        echo "Built library: $SO"
+        echo "Run 'mise run check-nif-symbols example/calculator/native/$SO' to verify symbols"
+    fi
+fi
+"""
+
+[tasks.build-calculator-linux]
+description = "Build the calculator example on Linux using Docker"
+run = """
+#!/bin/bash
+set -e
+
+if ! command -v docker &> /dev/null; then
+    echo "Error: Docker is required but not installed"
+    exit 1
+fi
+
+echo "Building calculator example for Linux in Docker..."
+
+# Create a temporary directory for the build
+TEMP_DIR=$(mktemp -d)
+echo "Using temporary directory: $TEMP_DIR"
+
+# Copy only necessary files
+cp -r Sources "$TEMP_DIR/"
+cp Package.swift "$TEMP_DIR/"
+cp -r example "$TEMP_DIR/"
+
+# Run build in Docker
+docker run --rm -v "$TEMP_DIR:/build" -w /build swift:6.0-jammy bash -c '
+    cd example/calculator/native
+    
+    echo "=== Starting build (this may take several minutes due to SwiftSyntax) ==="
+    if timeout 300 swift build -c release; then
+        echo "Build completed successfully!"
+    else
+        echo "Build timed out or failed after 5 minutes"
+        echo "This is usually due to SwiftSyntax compilation taking too long"
+    fi
+    
+    echo -e "\n=== Checking for built libraries ==="
+    find . -name "*.so" -type f
+    
+    echo -e "\n=== Checking NIF symbols in Linux libraries ==="
+    for lib in $(find . -name "*Calculator*.so" -type f); do
+        echo -e "\nChecking $lib:"
+        nm -D "$lib" 2>/dev/null | grep -E "T (nif_init|__swiftler_nif_thunk)" || echo "No NIF symbols found"
+    done
+'
+
+# Cleanup
+rm -rf "$TEMP_DIR"
+echo "Done."
+"""
+
+[tasks.test-linux-symbols]
+description = "Test NIF symbol generation on Linux without full build"
+run = """
+#!/bin/bash
+set -e
+
+if ! command -v docker &> /dev/null; then
+    echo "Error: Docker is required but not installed"
+    exit 1
+fi
+
+echo "Testing NIF symbol generation on Linux..."
+
+# Create a minimal test file with @_cdecl exports
+cat > /tmp/test-nif-linux.swift << 'EOF'
+import Foundation
+
+// Test function with C export
+@_cdecl("__swiftler_nif_thunk_test")
+public func __swiftler_nif_thunk_test(
+    env: OpaquePointer?,
+    argc: Int32,
+    argv: UnsafePointer<UInt64>?
+) -> UInt64 {
+    return 42
+}
+
+// Test nif_init export  
+@_cdecl("nif_init")
+public func nif_init() -> UnsafeRawPointer? {
+    return nil
+}
+EOF
+
+# Run in Docker
+docker run --rm -v "/tmp:/work" -w /work swift:6.0-jammy bash -c '
+    echo "=== Compiling test file ==="
+    swiftc -emit-library -o test-nif.so test-nif-linux.swift
+    
+    echo -e "\n=== Checking symbols with nm -D ==="
+    nm -D test-nif.so | grep -E "nif_init|__swiftler_nif_thunk"
+    
+    echo -e "\n=== Checking all exported symbols ==="
+    nm -D test-nif.so | grep " T " | head -10
+'
+
+# Cleanup
+rm -f /tmp/test-nif-linux.swift
+"""
+
+[tasks.verify-calculator-symbols]
+description = "Build calculator and verify NIF symbols on current platform"
+depends = ["build-calculator"]
+run = """
+#!/bin/bash
+set -e
+
+cd example/calculator/native
+
+# Find the built library
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    LIBRARY=$(find .build -name "*Calculator*.dylib" -type f | head -1)
+else
+    LIBRARY=$(find .build -name "*Calculator*.so" -type f | head -1)
+fi
+
+if [ -z "$LIBRARY" ]; then
+    echo "Error: No calculator library found"
+    exit 1
+fi
+
+cd ../../..
+mise run check-nif-symbols "example/calculator/native/$LIBRARY"
+"""
+
+[tasks.ci-verify-symbols]
+description = "CI task to verify symbols on both macOS and Linux"
+run = """
+#!/bin/bash
+set -e
+
+echo "=== Verifying NIF symbols for CI ==="
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "Running on macOS..."
+    mise run verify-calculator-symbols
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    echo "Running on Linux..."
+    mise run build-calculator
+    
+    # Find and check the .so file
+    cd example/calculator/native
+    LIBRARY=$(find .build -name "*Calculator*.so" -type f | head -1)
+    if [ -z "$LIBRARY" ]; then
+        echo "Error: No calculator library found"
+        exit 1
+    fi
+    cd ../../..
+    mise run check-nif-symbols "example/calculator/native/$LIBRARY"
+else
+    echo "Unsupported platform for CI: $OSTYPE"
+    exit 1
+fi
+"""
