@@ -51,8 +51,8 @@ check_symbols() {
         # macOS
         echo "Platform: macOS"
         echo ""
-        echo "NIF symbols (should show _nif_init and ___swiftler_nif_thunk_*):"
-        nm -gU "$library" 2>/dev/null | grep -E "T (_nif_init|___swiftler_nif_thunk)" || echo "No NIF symbols found"
+        echo "NIF symbols (should show __nif_init and ___swiftler_nif_thunk_*):"
+        nm -gU "$library" 2>/dev/null | grep -E "T (__nif_init|___swiftler_nif_thunk)" || echo "No NIF symbols found"
         echo ""
         echo "All exported symbols:"
         nm -gU "$library" 2>/dev/null | grep " T " | head -20

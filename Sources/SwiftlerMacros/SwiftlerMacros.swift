@@ -147,7 +147,7 @@ public struct NIFMacro: PeerMacro {
         // Generate thunk function
         let thunkFunction = """
             @_cdecl("\(thunkName)")
-            func \(thunkName)(
+            public func \(thunkName)(
                 env: OpaquePointer?,
                 argc: Int32,
                 argv: UnsafePointer<ERL_NIF_TERM>?
@@ -220,7 +220,7 @@ public struct NIFLibraryMacro: DeclarationMacro {
         // Actually, all Unix systems including macOS expect _nif_init
         let initFunction = """
             @_cdecl("_nif_init")
-            func nif_init() -> UnsafePointer<ErlNifEntry>? {
+            public func nif_init() -> UnsafePointer<ErlNifEntry>? {
                 let funcs: [ErlNifFunc] = [
                     \(functionEntries)
                 ]
