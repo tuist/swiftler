@@ -87,44 +87,38 @@ defmodule Swiftler.Compiler do
   end
 
   defp use_prebuilt_library do
-    prebuilt_dir = "prebuilt"
-    File.mkdir_p!("priv")
-    
-    extension = case :os.type() do
-      {:unix, :darwin} -> ".dylib"
-      _ -> ".so"
-    end
-    
-    # Copy all matching libraries from prebuilt to priv
-    File.ls!(prebuilt_dir)
-    |> Enum.filter(fn file -> String.ends_with?(file, extension) end)
-    |> Enum.each(fn file ->
-      source = Path.join(prebuilt_dir, file)
-      target = Path.join("priv", file)
-      File.cp!(source, target)
-      
-      # Create symlink for macOS if needed
-      if extension == ".dylib" do
-        so_target = String.replace_suffix(target, ".dylib", ".so")
-        File.rm(so_target)
-        File.ln_s(Path.basename(target), so_target)
-      end
-    end)
-    
+    # Prebuilt libraries are used directly from the prebuilt directory
+    # No copying needed since we load NIFs directly from their location
     :ok
   end
 
   defp compiled_library_exists? do
-    # Check if the specific library exists in priv/
-    if File.exists?("priv") do
+    # Check if the library exists in the Swift build directory
+    build_dir = if File.exists?("Package.swift"), do: ".", else: "native"
+    
+    # Swift Package Manager uses architecture-specific build directories on macOS
+    build_paths = [
+      "#{build_dir}/.build/arm64-apple-macosx/release",  # macOS Apple Silicon
+      "#{build_dir}/.build/x86_64-apple-macosx/release", # macOS Intel
+      "#{build_dir}/.build/release"  # Linux and fallback
+    ]
+    
+    # Find the first existing build path
+    build_path = Enum.find(build_paths, &File.exists?/1)
+    
+    if build_path && File.exists?(build_path) do
       # Look for the expected library name based on Package.swift
       package_name = get_package_name()
+      extension = case :os.type() do
+        {:unix, :darwin} -> ".dylib"
+        _ -> ".so"
+      end
       
-      File.ls!("priv")
+      File.ls!(build_path)
       |> Enum.any?(fn file ->
         # Check for lib{PackageName}.dylib or lib{PackageName}.so
-        (String.starts_with?(file, "lib#{package_name}") and
-          (String.ends_with?(file, ".dylib") or String.ends_with?(file, ".so")))
+        String.starts_with?(file, "lib#{package_name}") and
+          String.ends_with?(file, extension)
       end)
     else
       false
@@ -215,7 +209,7 @@ defmodule Swiftler.Compiler do
 
     # Run Swift build command with a reasonable timeout
     # Note: First builds can take 5-10+ minutes due to SwiftSyntax compilation
-    timeout = if System.get_env("CI"), do: 600_000, else: 300_000  # 10 min in CI, 5 min locally
+    timeout = if System.get_env("CI"), do: 900_000, else: 900_000  # 15 min for SwiftSyntax compilation
     
     # Check if we're in CI or if the user wants verbose output
     unless System.get_env("MIX_QUIET") == "true" do
@@ -250,45 +244,22 @@ defmodule Swiftler.Compiler do
         {:error, "Could not find compiled dynamic library (.dylib/.so) in #{build_path}"}
 
       dynamic_lib_path ->
-        # Copy dynamic library to priv for NIF loading
-        File.mkdir_p!("priv")
-
-        # Determine target filename based on source
-        source_filename = Path.basename(dynamic_lib_path)
-
-        # Keep the original filename from Swift Package Manager
-        target_filename = source_filename
-
-        target_path = Path.join("priv", target_filename)
-
-        case File.cp(dynamic_lib_path, target_path) do
-          :ok ->
-            # Create symlink for macOS Erlang NIF loader bug
-            # Erlang on macOS looks for .so files even though it should look for .dylib
-            if String.ends_with?(target_path, ".dylib") do
-              so_path = String.replace_suffix(target_path, ".dylib", ".so")
-              # Remove existing symlink if it exists
-              File.rm(so_path)
-              # Create symlink from .so to .dylib
-              case File.ln_s(Path.basename(target_path), so_path) do
-                :ok ->
-                  :ok
-
-                # Symlink already exists
-                {:error, :eexist} ->
-                  :ok
-
-                {:error, reason} ->
-                  IO.warn("Failed to create .so symlink: #{reason}")
-                  :ok
-              end
-            end
-
-            :ok
-
-          {:error, reason} ->
-            {:error, "Failed to copy dynamic library: #{reason}"}
+        # On macOS, Erlang's NIF loader expects .so files but Swift produces .dylib
+        # Create a hard link with .so extension to satisfy Erlang without copying the file
+        if String.ends_with?(dynamic_lib_path, ".dylib") do
+          so_path = String.replace_suffix(dynamic_lib_path, ".dylib", ".so")
+          # Remove any existing .so file first
+          File.rm(so_path)
+          # Create hard link (same file, different name)
+          case System.cmd("ln", [dynamic_lib_path, so_path], stderr_to_stdout: true) do
+            {_, 0} -> :ok
+            {output, _} -> 
+              IO.warn("Failed to create hard link for NIF loading: #{output}")
+              :ok
+          end
         end
+        
+        :ok
     end
   end
 
@@ -306,7 +277,18 @@ defmodule Swiftler.Compiler do
   end
 
   defp find_library_path(app_path, package_name) do
-    priv_dir = Path.join(app_path, "priv")
+    # Look for the library in the Swift build directory
+    build_dir = if File.exists?(Path.join(app_path, "Package.swift")), do: app_path, else: Path.join(app_path, "native")
+    
+    # Swift Package Manager uses architecture-specific build directories on macOS
+    build_paths = [
+      Path.join([build_dir, ".build", "arm64-apple-macosx", "release"]),  # macOS Apple Silicon
+      Path.join([build_dir, ".build", "x86_64-apple-macosx", "release"]), # macOS Intel
+      Path.join([build_dir, ".build", "release"])  # Linux and fallback
+    ]
+    
+    # Find the first existing build path
+    build_path = Enum.find(build_paths, &File.exists?/1) || List.last(build_paths)
 
     # On macOS, only look for .dylib; on Linux, only look for .so
     extension =
@@ -322,25 +304,24 @@ defmodule Swiftler.Compiler do
       "#{package_name}#{extension}"
     ]
 
-    # First try the expected names
+    # First try the expected names in the build directory
     found =
       Enum.find_value(possible_names, fn name ->
-        path = Path.join(priv_dir, name)
+        path = Path.join(build_path, name)
 
         if File.exists?(path) do
           # For :erlang.load_nif, we need to pass the path without extension
-          # BUT only if the file actually exists with the correct extension
-          # This ensures we're loading the right file
-          Path.join(priv_dir, Path.basename(name, extension))
+          # Return the full path without extension
+          String.replace_suffix(path, extension, "")
         end
       end)
 
-    # If not found, look for any dynamic library in priv
-    found || find_any_dynamic_library(priv_dir) || Path.join(priv_dir, "libswiftler")
+    # If not found, look for any dynamic library in build directory
+    found || find_any_dynamic_library(build_path) || Path.join(build_path, "libswiftler")
   end
 
-  defp find_any_dynamic_library(priv_dir) do
-    if File.exists?(priv_dir) do
+  defp find_any_dynamic_library(build_path) do
+    if File.exists?(build_path) do
       # Only look for the correct extension for the current platform
       extension =
         case :os.type() do
@@ -349,16 +330,16 @@ defmodule Swiftler.Compiler do
         end
 
       libs =
-        File.ls!(priv_dir)
+        File.ls!(build_path)
         |> Enum.filter(fn file ->
           String.ends_with?(file, extension)
         end)
 
       case libs do
         [lib | _] ->
-          # Return path without extension for :erlang.load_nif
-          # Use the specific extension we found
-          Path.join(priv_dir, Path.basename(lib, extension))
+          # Return full path without extension for :erlang.load_nif
+          path = Path.join(build_path, lib)
+          String.replace_suffix(path, extension, "")
 
         [] ->
           nil

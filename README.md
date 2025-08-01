@@ -1,5 +1,16 @@
 # Swiftler
 
+> [!IMPORTANT]
+> **Project Archived**: After extensive experimentation, we've concluded that integrating Swift with Elixir NIFs presents fundamental challenges that make this approach impractical. The primary blockers include:
+> 
+> - **Swift Runtime Initialization**: Swift requires its runtime to be properly initialized before any Swift code can execute. Unlike C or Rust, Swift's runtime manages memory (ARC), metadata, and other critical components that must be set up before use.
+> - **ABI Stability Issues**: Swift's ABI is only stable on Apple platforms. On Linux and other platforms, the ABI can change between Swift versions, making it difficult to create reliable cross-platform NIFs.
+> - **Memory Management Conflicts**: Swift's ARC (Automatic Reference Counting) and Elixir's garbage collector operate on fundamentally different principles, making it challenging to safely pass objects between the two runtimes.
+> - **Symbol Export Complexity**: Swift's name mangling and the requirement for `@_cdecl` attributes make it difficult to reliably export C-compatible symbols that Erlang's NIF system expects.
+> - **Platform Differences**: The different symbol naming conventions between platforms (underscore prefixes on macOS vs. none on Linux) add another layer of complexity.
+> 
+> While it's theoretically possible to make Swift NIFs work with significant workarounds (manual runtime initialization, careful memory management, platform-specific code), the complexity and fragility of such a solution outweigh the benefits. We recommend using Rustler for native code integration with Elixir, as Rust's design aligns much better with the requirements of NIF development.
+
 A utility for calling Swift code from Elixir, similar to how Rustler works for Rust. Swiftler provides seamless integration between Elixir and Swift through dynamic binary generation and automatic NIF binding generation.
 
 ## Features

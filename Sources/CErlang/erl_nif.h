@@ -74,12 +74,15 @@ extern int enif_get_list_length(ErlNifEnv* env, ERL_NIF_TERM term, unsigned* len
 
 extern int enif_inspect_binary(ErlNifEnv* env, ERL_NIF_TERM bin_term, ErlNifBinary* bin);
 extern int enif_alloc_binary(size_t size, ErlNifBinary* bin);
+extern void enif_release_binary(ErlNifBinary* bin);
+extern ERL_NIF_TERM enif_make_new_binary(ErlNifEnv* env, size_t size, unsigned char** termp);
 
 /* Helper for string duplication */
 extern char* strdup(const char* s);
 
 /* Memory functions */
 extern void* memcpy(void* dest, const void* src, size_t n);
+extern void* memmove(void* dest, const void* src, size_t n);
 
 #ifdef __cplusplus
 }

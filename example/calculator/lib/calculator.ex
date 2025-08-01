@@ -25,6 +25,7 @@ defmodule Calculator do
 
   # String operations
   swift_function greet(name: :string) :: :string
+  swift_function simple_string_test() :: :string
 
   @doc """
   Calculates the least common multiple of two integers.

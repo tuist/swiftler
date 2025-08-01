@@ -243,3 +243,20 @@ The project is in active development with working macro system and dynamic libra
 - Compile-time Swift compilation when using `use Swiftler`
 - Integration with Mix compiler pipeline via `:swift` compiler
 - Manual macro expansion examples for debugging and testing NIF generation
+
+### Swift Build Caching
+
+Swift Package Manager maintains its build cache in the `.build` directory. To improve build times:
+
+1. **For development**: Keep the `.build` directory between builds
+2. **For tests**: Tests using `@tag :tmp_dir` create fresh directories, losing the cache. Consider:
+   - Using a shared build cache directory via `SWIFTPM_MODULECACHE_OVERRIDE`
+   - Running tests in the project directory instead of tmp_dir for Swift-heavy tests
+   - Pre-building SwiftSyntax separately and caching it
+
+### Build Timeouts
+
+SwiftSyntax compilation can take 10-15 minutes on first build. The compiler timeout is set to 15 minutes to accommodate this. If builds are timing out:
+- Check if SwiftSyntax is being rebuilt unnecessarily
+- Consider using a pre-built binary of SwiftSyntax if available
+- Use `--swiftler-path` for local development to avoid SwiftSyntax recompilation

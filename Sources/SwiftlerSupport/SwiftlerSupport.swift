@@ -150,24 +150,79 @@ extension BEAM.Term {
     }
     
     public init(_ string: String, env: BEAM.Env) {
-        let data = string.data(using: .utf8) ?? Data()
-        self = BEAM.Term(data, env: env)
-    }
-    
-    public init(_ data: Data, env: BEAM.Env) {
-        var binaryRef = ErlNifBinary()
-        enif_alloc_binary(data.count, &binaryRef)
+        print("[BEAM.Term.init] Creating term from string: '\(string)'")
         
-        if data.count > 0 {
-            data.withUnsafeBytes { bytes in
-                if let baseAddress = bytes.baseAddress {
-                    memcpy(binaryRef.data, baseAddress, bytes.count)
-                }
+        // Convert string to UTF-8 data
+        guard let data = string.data(using: .utf8) else {
+            print("[BEAM.Term.init] Failed to convert to UTF-8")
+            self = enif_make_badarg(env)
+            return
+        }
+        
+        print("[BEAM.Term.init] UTF-8 data size: \(data.count)")
+        
+        // Use the exact same approach as the working manual implementation
+        var binary = ErlNifBinary()
+        guard enif_alloc_binary(data.count, &binary) != 0 else {
+            print("[BEAM.Term.init] Failed to allocate binary")
+            self = enif_make_badarg(env)
+            return
+        }
+        
+        print("[BEAM.Term.init] Binary allocated")
+        
+        // Copy data using the exact same pattern as WorkingGreet.swift
+        data.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) in
+            if let baseAddress = bytes.baseAddress {
+                _ = memcpy(binary.data, baseAddress, bytes.count)
+                print("[BEAM.Term.init] Data copied")
             }
         }
         
-        let term = enif_make_binary(env, &binaryRef)
-        self = term
+        // Make binary - this takes ownership (exact same as working version)
+        print("[BEAM.Term.init] About to call enif_make_binary")
+        self = enif_make_binary(env, &binary)
+        print("[BEAM.Term.init] enif_make_binary returned, term: \(self)")
+        print("[BEAM.Term.init] About to return from initializer")
+    }
+    
+    public init(_ data: Data, env: BEAM.Env) {
+        // Use a straightforward approach without unsafe buffer operations
+        var binary = ErlNifBinary()
+        
+        // Allocate the binary
+        guard enif_alloc_binary(data.count, &binary) != 0 else {
+            self = enif_make_badarg(env)
+            return
+        }
+        
+        // For empty data, we're done
+        if data.count == 0 {
+            self = enif_make_binary(env, &binary)
+            return
+        }
+        
+        // Copy data safely using withUnsafeBytes and explicit bounds checking
+        let copyResult = data.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) -> Bool in
+            guard let baseAddress = bytes.baseAddress, 
+                  bytes.count == data.count,
+                  binary.size == data.count else {
+                return false
+            }
+            
+            // Safe memcpy with verified sizes - since we verified sizes are equal, just use data.count
+            memcpy(binary.data, baseAddress, data.count)
+            return true
+        }
+        
+        // If copy failed, return error
+        guard copyResult else {
+            self = enif_make_badarg(env)
+            return
+        }
+        
+        // Create the term - this transfers ownership to Erlang
+        self = enif_make_binary(env, &binary)
     }
     
     public init(_ bool: Bool, env: BEAM.Env) {

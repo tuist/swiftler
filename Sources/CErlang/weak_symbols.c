@@ -51,6 +51,14 @@ __attribute__((weak)) int enif_alloc_binary(size_t size, ErlNifBinary* bin) {
     return 0;
 }
 
+__attribute__((weak)) void enif_release_binary(ErlNifBinary* bin) {
+    // No-op
+}
+
+__attribute__((weak)) ERL_NIF_TERM enif_make_new_binary(ErlNifEnv* env, size_t size, unsigned char** termp) {
+    return 0; // Return badarg - this should never be called
+}
+
 __attribute__((weak)) int enif_get_atom_length(ErlNifEnv* env, ERL_NIF_TERM term, unsigned* len, unsigned encoding) {
     return 0;
 }

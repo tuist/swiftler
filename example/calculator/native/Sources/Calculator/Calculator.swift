@@ -1,7 +1,7 @@
 import Swiftler
 import Foundation
 
-#nifLibrary(name: "calculator", functions: [
+#nifLibrary(name: "Elixir.Calculator", functions: [
     add(_:_:), 
     subtract(_:_:), 
     multiply(_:_:), 
@@ -13,7 +13,8 @@ import Foundation
     gcd(_:_:),
     fibonacci(_:),
     circle_area(_:),
-    greet(_:)
+    greet(_:),
+    simple_string_test()
 ])
 
 // Basic arithmetic operations
@@ -104,4 +105,8 @@ import Foundation
 
 @nif func greet(_ name: String) -> String {
     "Hello, \(name)! Welcome to Swiftler Calculator."
+}
+
+@nif public func simple_string_test() -> String {
+    return "Simple test string"
 }

@@ -60,12 +60,7 @@ public struct NIFMacro: PeerMacro {
                     """
             case "String":
                 extraction = """
-                    var \(paramName)Binary = ErlNifBinary()
-                    guard enif_inspect_binary(env, argv[\(index)], &\(paramName)Binary) != 0 else {
-                        return enif_make_badarg(env)
-                    }
-                    let \(paramName)Data = Data(bytes: \(paramName)Binary.data, count: \(paramName)Binary.size)
-                    guard let \(paramName) = String(data: \(paramName)Data, encoding: .utf8) else {
+                    guard let \(paramName) = String(argv[\(index)], env: env) else {
                         return enif_make_badarg(env)
                     }
                     """
@@ -109,16 +104,14 @@ public struct NIFMacro: PeerMacro {
                     """
             case "String":
                 resultConversion = """
+                    print("[THUNK] About to call \(functionName)")
                     let result = \(functionCall)
-                    let resultData = result.data(using: .utf8) ?? Data()
-                    var resultBinary = ErlNifBinary()
-                    _ = enif_alloc_binary(resultData.count, &resultBinary)
-                    resultData.withUnsafeBytes { bytes in
-                        if let baseAddress = bytes.baseAddress {
-                            memcpy(resultBinary.data, baseAddress, bytes.count)
-                        }
-                    }
-                    return enif_make_binary(env, &resultBinary)
+                    print("[THUNK] Got result: '\\(result)'")
+                    print("[THUNK] About to create BEAM.Term")
+                    let term = BEAM.Term(result, env: env)
+                    print("[THUNK] BEAM.Term created successfully: \\(term)")
+                    print("[THUNK] About to return term")
+                    return term
                     """
             case "Double":
                 resultConversion = """
@@ -152,7 +145,8 @@ public struct NIFMacro: PeerMacro {
                 argc: Int32,
                 argv: UnsafePointer<ERL_NIF_TERM>?
             ) -> ERL_NIF_TERM {
-                guard let env = env, let argv = argv else { return 0 }
+                guard let env = env else { return 0 }
+                \(parameterExtractions.isEmpty ? "" : "guard let argv = argv else { return 0 }")
                 
                 \(parameterExtractions.joined(separator: "\n    "))
                 
@@ -189,6 +183,9 @@ public struct NIFLibraryMacro: DeclarationMacro {
                     .trimmingCharacters(in: .whitespaces)
                 
                 // Extract function name
+                // Count colons for arity first (each colon represents a parameter)
+                let arity = funcExpr.filter { $0 == ":" }.count
+                
                 let funcName = funcExpr
                     .replacingOccurrences(of: "(", with: "")
                     .replacingOccurrences(of: ")", with: "")
@@ -196,9 +193,6 @@ public struct NIFLibraryMacro: DeclarationMacro {
                     .replacingOccurrences(of: ":", with: "")
                     .replacingOccurrences(of: "\n", with: "")
                     .replacingOccurrences(of: " ", with: "")
-                
-                // Count underscores for arity
-                let arity = funcExpr.filter { $0 == "_" }.count
                 
                 functionInfos.append((name: funcName, arity: arity))
             }

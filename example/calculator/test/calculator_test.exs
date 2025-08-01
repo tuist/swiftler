@@ -84,6 +84,10 @@ defmodule CalculatorTest do
       assert Calculator.greet("World") == "Hello, World! Welcome to Swiftler Calculator."
       assert Calculator.greet("Elixir") == "Hello, Elixir! Welcome to Swiftler Calculator."
     end
+
+    test "simple_string_test/0 returns a simple string" do
+      assert Calculator.simple_string_test() == "Simple test string"
+    end
   end
 
   describe "composite functions" do
